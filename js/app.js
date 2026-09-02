@@ -1,141 +1,226 @@
-console.log('🚀 app.js loaded');
+console.log('🚀 GITMANHWA loaded');
 
 let SERIES = [];
+let currentSlide = 0;
+let slideInterval;
 
+// ===== LOAD DATA =====
 fetch('data/series.json')
-  .then(response => {
-    console.log('📡 Fetch response status:', response.status);
-    if (!response.ok) throw new Error('HTTP ' + response.status);
-    return response.json();
+  .then(r => {
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
   })
   .then(data => {
-    console.log('✅ Data loaded:', data);
     SERIES = data;
-    renderSeriesGrid('manhwa');
-    renderUpdates();
-    // Tampilkan pesan sukses di grid
-    document.querySelector('.series-grid .empty')?.remove();
-    document.querySelector('.update-list .empty')?.remove();
+    console.log('✅ Data loaded:', SERIES.length, 'series');
+    renderAll();
   })
   .catch(err => {
-    console.error('❌ Gagal load series:', err);
-    document.getElementById('series-grid').innerHTML = `<div class="empty">❌ Gagal load data: ${err.message}</div>`;
-    document.getElementById('update-list').innerHTML = `<div class="empty">❌ Gagal load data: ${err.message}</div>`;
+    console.error('❌ Error:', err);
+    document.getElementById('seriesGrid').innerHTML = `<div class="empty">❌ Gagal load data: ${err.message}</div>`;
+    document.getElementById('updateList').innerHTML = `<div class="empty">❌ Gagal load data: ${err.message}</div>`;
   });
 
-function renderSeriesGrid(filter = 'manhwa') {
-  const grid = document.getElementById('series-grid');
-  if (!grid) return;
-  
-  const filtered = SERIES.filter(s => s.type === filter);
-  console.log('📊 Render grid:', filter, filtered.length, 'items');
-  
-  if (filtered.length === 0) {
-    grid.innerHTML = `<div class="empty">Tidak ada series untuk kategori ${filter}</div>`;
+// ===== RENDER ALL =====
+function renderAll() {
+  renderSlider();
+  renderSeriesGrid('all');
+  renderUpdates();
+  updateSeriesCount();
+}
+
+// ===== SLIDER =====
+function renderSlider() {
+  const container = document.getElementById('sliderContainer');
+  const dotsContainer = document.getElementById('sliderDots');
+  if (!container) return;
+
+  const slides = SERIES.slice(0, 5);
+  if (slides.length === 0) {
+    container.innerHTML = `<div class="empty">Tidak ada data</div>`;
     return;
   }
 
-  grid.innerHTML = filtered.map(s => {
-    const cover = s.cover || '';
-    return `<a href="series.html?id=${s.id}" class="series-card">
+  container.innerHTML = slides.map((s, i) => `
+    <div class="slide ${i === 0 ? 'active' : ''}" data-index="${i}">
+      <img src="${s.cover || ''}" class="slide-cover" onerror="this.style.display='none'">
+      <div class="slide-info">
+        <h2>${s.title}</h2>
+        <div class="slide-meta">${s.flag || ''} ${s.type || 'Manhwa'} · ${s.status || 'Ongoing'}</div>
+        <div class="slide-desc">${s.synopsis || 'Sinopsis tidak tersedia'}</div>
+        <a href="series.html?id=${s.id}" class="slide-btn">Baca Sekarang</a>
+      </div>
+    </div>
+  `).join('');
+
+  // Dots
+  dotsContainer.innerHTML = slides.map((_, i) => `
+    <span class="dot ${i === 0 ? 'active' : ''}" data-index="${i}"></span>
+  `).join('');
+
+  // Dot click
+  dotsContainer.querySelectorAll('.dot').forEach(dot => {
+    dot.addEventListener('click', function() {
+      goToSlide(parseInt(this.dataset.index));
+    });
+  });
+
+  // Auto slide
+  clearInterval(slideInterval);
+  slideInterval = setInterval(() => {
+    const total = slides.length;
+    goToSlide((currentSlide + 1) % total);
+  }, 5000);
+}
+
+function goToSlide(index) {
+  const slides = document.querySelectorAll('.slide');
+  const dots = document.querySelectorAll('.dot');
+  if (!slides.length) return;
+
+  slides.forEach(s => s.classList.remove('active'));
+  dots.forEach(d => d.classList.remove('active'));
+
+  slides[index].classList.add('active');
+  dots[index].classList.add('active');
+  currentSlide = index;
+}
+
+// ===== SERIES GRID =====
+function renderSeriesGrid(filter = 'all', genre = 'all') {
+  const grid = document.getElementById('seriesGrid');
+  if (!grid) return;
+
+  let filtered = [...SERIES];
+
+  // Filter by tab (dari URL atau default)
+  const tab = new URLSearchParams(location.search).get('tab');
+  if (tab === 'populer') {
+    filtered = filtered.sort((a,b) => (b.rating || 0) - (a.rating || 0));
+  } else if (tab === 'selesai') {
+    filtered = filtered.filter(s => s.status === 'Completed');
+  }
+
+  // Filter by genre
+  if (genre !== 'all') {
+    filtered = filtered.filter(s => s.genre && s.genre.some(g => g.toLowerCase() === genre.toLowerCase()));
+  }
+
+  if (filtered.length === 0) {
+    grid.innerHTML = `<div class="empty">Tidak ada series untuk filter ini</div>`;
+    return;
+  }
+
+  grid.innerHTML = filtered.map(s => `
+    <a href="series.html?id=${s.id}" class="series-card">
       <div class="series-cover">
-        <img src="${cover}" alt="${s.title}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-        <div class="cover-fallback" style="display:none;width:100%;height:100%;background:linear-gradient(135deg,#2a2a3e,#1a1a2e);align-items:center;justify-content:center;font-size:24px;font-weight:bold;color:#666">${s.title.charAt(0)}</div>
-        <span class="flag">${s.flag}</span>
+        <img src="${s.cover || ''}" alt="${s.title}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+        <div class="cover-fallback" style="display:none">${s.title.charAt(0)}</div>
+        <span class="flag">${s.flag || ''}</span>
       </div>
       <div class="series-meta">
         <div class="series-title">${s.title}</div>
-        <div class="series-info"><span>⏱ ${s.chapters[0] ? 'baru' : '-'}</span></div>
+        <div class="series-info">
+          <span class="rating">⭐ ${s.rating || '?'}</span>
+          <span class="chapter-info">Ch.${s.chapters[0]?.num || 0}</span>
+        </div>
       </div>
-    </a>`;
-  }).join('');
+    </a>
+  `).join('');
+
+  updateSeriesCount();
 }
 
+function updateSeriesCount() {
+  const el = document.getElementById('seriesCount');
+  if (el) el.textContent = SERIES.length + ' series';
+}
+
+// ===== UPDATES =====
 function renderUpdates() {
-  const list = document.getElementById('update-list');
+  const list = document.getElementById('updateList');
   if (!list) return;
-  
+
   const hasData = SERIES.filter(s => s.chapters.length);
-  console.log('📰 Render updates:', hasData.length, 'series');
-  
   if (hasData.length === 0) {
     list.innerHTML = `<div class="empty">Belum ada update</div>`;
     return;
   }
 
-  list.innerHTML = SERIES.filter(s => s.chapters.length).map(s => {
-    const chaptersHtml = s.chapters.slice(0, 3).map(c =>
-      `<a href="reader.html?series=${s.id}&chapter=${c.folder}" class="chapter-row">
+  list.innerHTML = SERIES.map(s => {
+    const latest = s.chapters.slice(0, 3);
+    const chaptersHtml = latest.map(c => `
+      <a href="reader.html?series=${s.id}&chapter=${c.folder}" class="chapter-row">
         <span class="chapter-name">Chapter ${c.num}</span>
         <span class="chapter-time">baru</span>
-      </a>`
-    ).join('');
-    return `<div class="update-item">
-      <div class="update-cover">
-        <img src="${s.cover}" style="width:100%;height:100%;object-fit:cover;border-radius:6px" onerror="this.style.display='none'">
+      </a>
+    `).join('');
+
+    const genreTags = s.genre ? s.genre.slice(0, 2).map(g => `<span class="genre-tag">${g}</span>`).join('') : '';
+
+    return `
+      <div class="update-item">
+        <div class="update-cover">
+          <img src="${s.cover || ''}" onerror="this.style.display='none'">
+        </div>
+        <div class="update-info">
+          <div class="update-title">
+            <span class="up">UP</span>
+            ${s.title}
+            ${genreTags}
+          </div>
+          <div class="chapter-list">${chaptersHtml}</div>
+        </div>
       </div>
-      <div class="update-info">
-        <div class="update-title"><span class="up">UP</span> ${s.title}</div>
-        <div class="chapter-list">${chaptersHtml}</div>
-      </div>
-    </div>`;
+    `;
   }).join('');
 }
 
-// Tabs
-document.querySelectorAll('.tab[data-tab]').forEach(btn => {
+// ===== GENRE FILTER =====
+document.querySelectorAll('.genre-btn').forEach(btn => {
   btn.addEventListener('click', function() {
-    document.querySelectorAll('.tab[data-tab]').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.genre-btn').forEach(b => b.classList.remove('active'));
     this.classList.add('active');
-    renderSeriesGrid(this.dataset.tab);
+    const genre = this.dataset.genre;
+    renderSeriesGrid('all', genre);
   });
 });
 
 // ===== SEARCH =====
-console.log('🔍 Search init');
 const searchBtn = document.getElementById('searchBtn');
 const searchModal = document.getElementById('searchModal');
 const searchInput = document.getElementById('searchInput');
 const searchResult = document.getElementById('searchResult');
 const closeSearch = document.getElementById('closeSearch');
 
-if (searchBtn) {
-  searchBtn.addEventListener('click', function() {
-    console.log('🔍 Search button clicked');
-    searchModal.classList.add('show');
-    searchInput.focus();
-    searchResult.innerHTML = '';
-    searchInput.value = '';
-  });
-}
+searchBtn?.addEventListener('click', () => {
+  searchModal.classList.add('show');
+  searchInput.focus();
+  searchResult.innerHTML = '';
+  searchInput.value = '';
+});
 
-if (closeSearch) {
-  closeSearch.addEventListener('click', function() {
-    searchModal.classList.remove('show');
-  });
-}
+closeSearch?.addEventListener('click', () => searchModal.classList.remove('show'));
+searchModal?.addEventListener('click', (e) => {
+  if (e.target === searchModal) searchModal.classList.remove('show');
+});
 
-if (searchModal) {
-  searchModal.addEventListener('click', function(e) {
-    if (e.target === this) searchModal.classList.remove('show');
-  });
-}
+searchInput?.addEventListener('input', function() {
+  const q = this.value.toLowerCase().trim();
+  if (!q) { searchResult.innerHTML = ''; return; }
+  const filtered = SERIES.filter(s => s.title.toLowerCase().includes(q));
+  if (filtered.length === 0) {
+    searchResult.innerHTML = `<div class="search-item" style="color:#666">Tidak ditemukan</div>`;
+    return;
+  }
+  searchResult.innerHTML = filtered.map(s =>
+    `<a href="series.html?id=${s.id}" class="search-item">${s.title} ⭐${s.rating || '?'} · ${s.type || 'Manhwa'}</a>`
+  ).join('');
+});
 
-if (searchInput) {
-  searchInput.addEventListener('input', function() {
-    const q = this.value.toLowerCase().trim();
-    if (!q) { 
-      searchResult.innerHTML = ''; 
-      return; 
-    }
-    const filtered = SERIES.filter(s => s.title.toLowerCase().includes(q));
-    console.log('🔍 Search results:', filtered.length);
-    if (filtered.length === 0) {
-      searchResult.innerHTML = `<div class="search-item" style="color:#666">Tidak ditemukan</div>`;
-      return;
-    }
-    searchResult.innerHTML = filtered.map(s =>
-      `<a href="series.html?id=${s.id}" class="search-item">${s.title} (${s.type})</a>`
-    ).join('');
-  });
-                               }
+// ===== NAV MENU ACTIVE =====
+document.querySelectorAll('.nav-menu a').forEach(a => {
+  if (a.href === window.location.href || a.href === window.location.href.split('?')[0]) {
+    a.classList.add('active');
+  }
+});
