@@ -463,3 +463,11 @@ header {
   font-size: 14px;
 }
 .close-modal:hover { background: #444; }
+
+/* Tambahan debug - biar kelihatan */
+.empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--muted);
+  font-size: 14px;
+}
