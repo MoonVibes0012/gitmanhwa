@@ -4,11 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Series - GITMANHWA</title>
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
   <header>
-    <a href="index.html" class="logo">
+    <a href="/index.html" class="logo">
       <div class="logo-icon">👁</div>
       <span>GITMANHWA</span>
     </a>
@@ -16,14 +16,14 @@
 
   <div id="series-detail"></div>
 
-  <script src="js/app.js"></script>
+  <script src="/js/app.js"></script>
   <script>
     (function() {
       const params = new URLSearchParams(location.search);
       const id = params.get('id');
       const container = document.getElementById('series-detail');
 
-      fetch('../data/series.json')
+      fetch('/data/series.json')
         .then(r => r.json())
         .then(data => {
           const series = data.find(s => s.id === id);
@@ -32,10 +32,8 @@
             return;
           }
 
-          // Sort chapters descending
           const sorted = series.chapters.sort((a,b) => b.num - a.num);
 
-          // Cover fallback
           let coverHtml = '';
           const coverSrc = series.cover || '';
           if (coverSrc) {
@@ -61,7 +59,7 @@
               <h3 class="section-title" style="margin-bottom:12px">Chapter</h3>
               <div class="chapter-grid">
                 ${sorted.map(c => `
-                  <a class="chapter-btn" href="reader.html?series=${series.id}&chapter=${c.folder}">
+                  <a class="chapter-btn" href="/reader.html?series=${series.id}&chapter=${c.folder}">
                     Chapter ${c.num}
                   </a>
                 `).join('')}
