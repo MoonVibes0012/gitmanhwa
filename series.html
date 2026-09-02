@@ -14,45 +14,65 @@
     </a>
   </header>
 
-  <div id="series-detail">
-    <!-- diisi JS -->
-  </div>
+  <div id="series-detail"></div>
 
   <script src="js/app.js"></script>
   <script>
-    const params = new URLSearchParams(location.search);
-    const id = params.get("id");
-    const series = SERIES.find(s => s.id === id);
+    (function() {
+      const params = new URLSearchParams(location.search);
+      const id = params.get('id');
+      const container = document.getElementById('series-detail');
 
-    const container = document.getElementById("series-detail");
-    if (!series) {
-      container.innerHTML = `<div class="empty">Series tidak ditemukan</div>`;
-    } else {
-      container.innerHTML = `
-        <div class="series-hero">
-          <div class="series-hero-cover">
-            ${series.cover ? `<img src="${series.cover}" style="width:100%;height:100%;object-fit:cover;border-radius:8px">` : series.title}
-          </div>
-          <div class="series-hero-info">
-            <h1>${series.title}</h1>
-            <div class="meta">${series.flag} · ${series.type} · ${series.status}</div>
-            <div class="badges">
-              <span class="badge badge-score">★ 8.0</span>
+      fetch('../data/series.json')
+        .then(r => r.json())
+        .then(data => {
+          const series = data.find(s => s.id === id);
+          if (!series) {
+            container.innerHTML = `<div class="empty">Series tidak ditemukan</div>`;
+            return;
+          }
+
+          // Sort chapters descending
+          const sorted = series.chapters.sort((a,b) => b.num - a.num);
+
+          // Cover fallback
+          let coverHtml = '';
+          const coverSrc = series.cover || '';
+          if (coverSrc) {
+            coverHtml = `<img src="${coverSrc}" style="width:100%;height:100%;object-fit:cover;border-radius:8px" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`;
+          }
+          const fallback = `<div class="cover-fallback" style="display:${coverSrc ? 'none' : 'flex'};width:100%;height:100%;background:linear-gradient(135deg,#2a2a3e,#1a1a2e);border-radius:8px;align-items:center;justify-content:center;font-size:32px;font-weight:bold;color:#666">${series.title.charAt(0)}</div>`;
+
+          container.innerHTML = `
+            <div class="series-hero">
+              <div class="series-hero-cover">
+                ${coverHtml}
+                ${fallback}
+              </div>
+              <div class="series-hero-info">
+                <h1>${series.title}</h1>
+                <div class="meta">${series.flag} · ${series.type} · ${series.status}</div>
+                <div class="badges">
+                  <span class="badge badge-score">★ 8.0</span>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-        <div class="section">
-          <h3 class="section-title" style="margin-bottom:12px">Chapter</h3>
-          <div class="chapter-grid">
-            ${series.chapters.map(c => `
-              <a class="chapter-btn" href="reader.html?series=${series.id}&chapter=${c.folder}">
-                Chapter ${c.num}
-              </a>
-            `).join("")}
-          </div>
-        </div>
-      `;
-    }
+            <div class="section">
+              <h3 class="section-title" style="margin-bottom:12px">Chapter</h3>
+              <div class="chapter-grid">
+                ${sorted.map(c => `
+                  <a class="chapter-btn" href="reader.html?series=${series.id}&chapter=${c.folder}">
+                    Chapter ${c.num}
+                  </a>
+                `).join('')}
+              </div>
+            </div>
+          `;
+        })
+        .catch(err => {
+          container.innerHTML = `<div class="empty">Gagal load data: ${err.message}</div>`;
+        });
+    })();
   </script>
 </body>
 </html>
