@@ -7,14 +7,23 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+
+  <!-- ===== HEADER ===== -->
   <header>
-    <a href="index.html" class="logo">
-      <div class="logo-icon">👁</div>
-      <span>GITMANHWA</span>
-    </a>
+    <div class="header-container">
+      <a href="index.html" class="logo">
+        <div class="logo-icon">👁</div>
+        <span>GITMANHWA</span>
+      </a>
+      <nav class="nav-menu">
+        <a href="index.html">Beranda</a>
+        <a href="index.html?tab=all">Daftar Series</a>
+      </nav>
+    </div>
   </header>
 
-  <div id="series-detail">
+  <!-- ===== DETAIL ===== -->
+  <div id="seriesDetail">
     <div class="empty">Loading...</div>
   </div>
 
@@ -22,18 +31,11 @@
     (function() {
       const params = new URLSearchParams(location.search);
       const id = params.get('id');
-      const container = document.getElementById('series-detail');
-
-      console.log('📖 Series detail:', id);
+      const container = document.getElementById('seriesDetail');
 
       fetch('data/series.json')
-        .then(r => {
-          console.log('📡 Fetch status:', r.status);
-          if (!r.ok) throw new Error('HTTP ' + r.status);
-          return r.json();
-        })
+        .then(r => r.json())
         .then(data => {
-          console.log('✅ Data loaded, mencari:', id);
           const series = data.find(s => s.id === id);
           if (!series) {
             container.innerHTML = `<div class="empty">Series tidak ditemukan</div>`;
@@ -43,40 +45,48 @@
           const sorted = series.chapters.sort((a,b) => b.num - a.num);
 
           let coverHtml = '';
-          const coverSrc = series.cover || '';
-          if (coverSrc) {
-            coverHtml = `<img src="${coverSrc}" style="width:100%;height:100%;object-fit:cover;border-radius:8px" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`;
+          if (series.cover) {
+            coverHtml = `<img src="${series.cover}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`;
           }
-          const fallback = `<div class="cover-fallback" style="display:${coverSrc ? 'none' : 'flex'};width:100%;height:100%;background:linear-gradient(135deg,#2a2a3e,#1a1a2e);border-radius:8px;align-items:center;justify-content:center;font-size:32px;font-weight:bold;color:#666">${series.title.charAt(0)}</div>`;
+          const fallback = `<div class="cover-fallback" style="display:${series.cover ? 'none' : 'flex'}">${series.title.charAt(0)}</div>`;
+
+          const genreHtml = series.genre ? series.genre.map(g => `<span class="genre-tag">${g}</span>`).join('') : '';
 
           container.innerHTML = `
-            <div class="series-hero">
-              <div class="series-hero-cover">
-                ${coverHtml}
-                ${fallback}
-              </div>
-              <div class="series-hero-info">
-                <h1>${series.title}</h1>
-                <div class="meta">${series.flag} · ${series.type} · ${series.status}</div>
-                <div class="badges">
-                  <span class="badge badge-score">★ 8.0</span>
+            <div class="series-detail-container">
+              <div class="series-hero">
+                <div class="series-hero-cover">
+                  ${coverHtml}
+                  ${fallback}
+                </div>
+                <div class="series-hero-info">
+                  <h1>${series.title}</h1>
+                  <div class="meta">
+                    <span>${series.flag || '🏳️'}</span>
+                    <span>${series.type || 'Manhwa'}</span>
+                    <span class="status ${series.status === 'Ongoing' ? 'ongoing' : 'completed'}">${series.status || 'Ongoing'}</span>
+                  </div>
+                  ${series.author ? `<div class="author">✏️ ${series.author}</div>` : ''}
+                  ${series.rating ? `<div class="rating">⭐ ${series.rating}</div>` : ''}
+                  <div class="genre-list">${genreHtml}</div>
+                  ${series.synopsis ? `<div class="synopsis">${series.synopsis}</div>` : ''}
                 </div>
               </div>
-            </div>
-            <div class="section">
-              <h3 class="section-title" style="margin-bottom:12px">Chapter</h3>
-              <div class="chapter-grid">
-                ${sorted.map(c => `
-                  <a class="chapter-btn" href="reader.html?series=${series.id}&chapter=${c.folder}">
-                    Chapter ${c.num}
-                  </a>
-                `).join('')}
+
+              <div class="section">
+                <h3 class="section-title">Daftar Chapter</h3>
+                <div class="chapter-grid">
+                  ${sorted.map(c => `
+                    <a class="chapter-btn" href="reader.html?series=${series.id}&chapter=${c.folder}">
+                      Chapter ${c.num}
+                    </a>
+                  `).join('')}
+                </div>
               </div>
             </div>
           `;
         })
         .catch(err => {
-          console.error('❌ Error:', err);
           container.innerHTML = `<div class="empty">Gagal load data: ${err.message}</div>`;
         });
     })();
