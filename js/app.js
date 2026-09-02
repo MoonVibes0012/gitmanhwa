@@ -73,6 +73,7 @@ function renderUpdates() {
         '<span class="chapter-time">' + c.time + '</span>' +
       '</a>';
     }).join('');
+    
 
     return '<div class="update-item">' +
       '<div class="update-cover">' +
