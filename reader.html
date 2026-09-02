@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Reader - GITMANHWA</title>
-  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
   <div class="reader-header">
@@ -20,7 +20,6 @@
     <button id="nextChapter">Berikutnya ›</button>
   </div>
 
-  <script src="/js/app.js"></script>
   <script>
     (function() {
       const params = new URLSearchParams(location.search);
@@ -37,8 +36,12 @@
       let chapters = [];
       let currentIndex = -1;
 
-      fetch('/data/series.json')
-        .then(r => r.json())
+      // PAKAI RELATIVE PATH
+      fetch('data/series.json')
+        .then(r => {
+          if (!r.ok) throw new Error('Gagal fetch: ' + r.status);
+          return r.json();
+        })
         .then(data => {
           seriesData = data.find(s => s.id === seriesId);
           if (!seriesData) throw new Error('Series tidak ditemukan');
@@ -57,12 +60,12 @@
         const ch = chapters[index];
         if (!ch) return;
         pagesEl.innerHTML = '';
-        const base = `/series/${seriesId}/${ch.folder}/`;
+        // PAKAI RELATIVE PATH
+        const base = 'series/' + seriesId + '/' + ch.folder + '/';
         let pageNum = 1;
         const maxTry = 80;
         const formats = ['jpg', 'png', 'webp', 'bmp'];
         let formatIndex = 0;
-        let loaded = 0;
 
         function pad(n) { return n.toString().padStart(2, '0'); }
 
@@ -73,7 +76,6 @@
           img.src = src;
           img.onload = function() {
             pagesEl.appendChild(img);
-            loaded++;
             pageNum++;
             formatIndex = 0;
             tryLoad();
@@ -97,7 +99,6 @@
           img.src = src;
           img.onload = function() {
             pagesEl.appendChild(img);
-            loaded++;
             pageNum = 2;
             formatIndex = 0;
             tryLoad();
@@ -131,7 +132,7 @@
         if (currentIndex > 0) {
           currentIndex--;
           const ch = chapters[currentIndex];
-          history.pushState(null, '', '/reader.html?series=' + seriesId + '&chapter=' + ch.folder);
+          history.pushState(null, '', 'reader.html?series=' + seriesId + '&chapter=' + ch.folder);
           loadChapter(currentIndex);
           updateNav();
           window.scrollTo(0, 0);
@@ -142,7 +143,7 @@
         if (currentIndex < chapters.length - 1) {
           currentIndex++;
           const ch = chapters[currentIndex];
-          history.pushState(null, '', '/reader.html?series=' + seriesId + '&chapter=' + ch.folder);
+          history.pushState(null, '', 'reader.html?series=' + seriesId + '&chapter=' + ch.folder);
           loadChapter(currentIndex);
           updateNav();
           window.scrollTo(0, 0);
