@@ -8,7 +8,7 @@
 </head>
 <body>
   <div class="reader-header">
-    <a href="javascript:history.back()">←</a>
+    <a href="#" id="backBtn">←</a>
     <div class="reader-title" id="reader-title">Loading...</div>
   </div>
 
@@ -33,12 +33,19 @@
       const prevBtn = document.getElementById("prevChapter");
       const nextBtn = document.getElementById("nextChapter");
       const indicator = document.getElementById("chapterIndicator");
+      const backBtn = document.getElementById("backBtn");
 
       let seriesData = null;
       let chapters = [];
       let currentIndex = -1;
 
       console.log('📖 Reader load:', seriesId, chapterFolder);
+
+      // Tombol kembali ke series detail
+      backBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        window.location.href = 'series.html?id=' + seriesId;
+      });
 
       fetch('data/series.json')
         .then(r => {
@@ -50,7 +57,7 @@
           console.log('✅ Data loaded, mencari series:', seriesId);
           seriesData = data.find(s => s.id === seriesId);
           if (!seriesData) throw new Error('Series tidak ditemukan');
-          chapters = seriesData.chapters.sort((a,b) => b.num - a.num);
+          chapters = seriesData.chapters.sort((a,b) => b.num - a.num); // DESC: chapter 9 di index 0
           currentIndex = chapters.findIndex(c => c.folder === chapterFolder);
           if (currentIndex === -1) currentIndex = 0;
           titleEl.textContent = seriesData.title + ' · Ch.' + chapters[currentIndex].num;
@@ -134,13 +141,17 @@
 
       function updateNav() {
         indicator.textContent = (currentIndex + 1) + ' / ' + chapters.length;
-        prevBtn.disabled = currentIndex === 0;
-        nextBtn.disabled = currentIndex === chapters.length - 1;
+        // Karena DESC: index 0 = chapter tertinggi, index terakhir = chapter terendah
+        // "Sebelumnya" artinya ke chapter lebih rendah (index + 1)
+        prevBtn.disabled = currentIndex === chapters.length - 1;
+        // "Berikutnya" artinya ke chapter lebih tinggi (index - 1)
+        nextBtn.disabled = currentIndex === 0;
       }
 
+      // PERBAIKAN: sebelumnya = ke index lebih besar (chapter lebih rendah)
       prevBtn.addEventListener('click', function() {
-        if (currentIndex > 0) {
-          currentIndex--;
+        if (currentIndex < chapters.length - 1) {
+          currentIndex++;
           const ch = chapters[currentIndex];
           history.pushState(null, '', 'reader.html?series=' + seriesId + '&chapter=' + ch.folder);
           loadChapter(currentIndex);
@@ -149,9 +160,10 @@
         }
       });
 
+      // PERBAIKAN: berikutnya = ke index lebih kecil (chapter lebih tinggi)
       nextBtn.addEventListener('click', function() {
-        if (currentIndex < chapters.length - 1) {
-          currentIndex++;
+        if (currentIndex > 0) {
+          currentIndex--;
           const ch = chapters[currentIndex];
           history.pushState(null, '', 'reader.html?series=' + seriesId + '&chapter=' + ch.folder);
           loadChapter(currentIndex);
