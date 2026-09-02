@@ -1,4 +1,4 @@
-console.log('🚀 GITMANHWA loaded');
+console.log('🦈 GITMANHWA loaded');
 
 let SERIES = [];
 let currentSlide = 0;
@@ -24,7 +24,10 @@ fetch('data/series.json')
 // ===== RENDER ALL =====
 function renderAll() {
   renderSlider();
-  renderSeriesGrid('all');
+  const params = new URLSearchParams(location.search);
+  const tab = params.get('tab') || 'all';
+  const genre = document.querySelector('.genre-btn.active')?.dataset.genre || 'all';
+  renderSeriesGrid(tab, genre);
   renderUpdates();
   updateSeriesCount();
 }
@@ -41,35 +44,39 @@ function renderSlider() {
     return;
   }
 
-  container.innerHTML = slides.map((s, i) => `
-    <div class="slide ${i === 0 ? 'active' : ''}" data-index="${i}">
-      <img src="${s.cover || ''}" class="slide-cover" onerror="this.style.display='none'">
-      <div class="slide-info">
-        <h2>${s.title}</h2>
-        <div class="slide-meta">${s.flag || ''} ${s.type || 'Manhwa'} · ${s.status || 'Ongoing'}</div>
-        <div class="slide-desc">${s.synopsis || 'Sinopsis tidak tersedia'}</div>
-        <a href="series.html?id=${s.id}" class="slide-btn">Baca Sekarang</a>
+  container.innerHTML = slides.map((s, i) => {
+    const coverHtml = s.cover 
+      ? `<img src="${s.cover}" class="slide-cover" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+      : '';
+    const fallbackHtml = `<div class="slide-cover-fallback" style="display:${s.cover ? 'none' : 'flex'}">${s.title.charAt(0)}</div>`;
+    
+    return `
+      <div class="slide ${i === 0 ? 'active' : ''}" data-index="${i}">
+        ${coverHtml}
+        ${fallbackHtml}
+        <div class="slide-info">
+          <h2>${s.title}</h2>
+          <div class="slide-meta">${s.flag || ''} ${s.type || 'Manhwa'} · ${s.status || 'Ongoing'}</div>
+          <div class="slide-desc">${s.synopsis || 'Sinopsis tidak tersedia'}</div>
+          <a href="series.html?id=${s.id}" class="slide-btn">Baca Sekarang</a>
+        </div>
       </div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 
-  // Dots
   dotsContainer.innerHTML = slides.map((_, i) => `
     <span class="dot ${i === 0 ? 'active' : ''}" data-index="${i}"></span>
   `).join('');
 
-  // Dot click
   dotsContainer.querySelectorAll('.dot').forEach(dot => {
     dot.addEventListener('click', function() {
       goToSlide(parseInt(this.dataset.index));
     });
   });
 
-  // Auto slide
   clearInterval(slideInterval);
   slideInterval = setInterval(() => {
-    const total = slides.length;
-    goToSlide((currentSlide + 1) % total);
+    goToSlide((currentSlide + 1) % slides.length);
   }, 5000);
 }
 
@@ -87,23 +94,22 @@ function goToSlide(index) {
 }
 
 // ===== SERIES GRID =====
-function renderSeriesGrid(filter = 'all', genre = 'all') {
+function renderSeriesGrid(tab = 'all', genre = 'all') {
   const grid = document.getElementById('seriesGrid');
   if (!grid) return;
 
   let filtered = [...SERIES];
 
-  // Filter by tab (dari URL atau default)
-  const tab = new URLSearchParams(location.search).get('tab');
   if (tab === 'populer') {
-    filtered = filtered.sort((a,b) => (b.rating || 0) - (a.rating || 0));
+    filtered = filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0));
   } else if (tab === 'selesai') {
-    filtered = filtered.filter(s => s.status === 'Completed');
+    filtered = filtered.filter(s => s.status === 'Completed' || s.status === 'Selesai');
   }
 
-  // Filter by genre
   if (genre !== 'all') {
-    filtered = filtered.filter(s => s.genre && s.genre.some(g => g.toLowerCase() === genre.toLowerCase()));
+    filtered = filtered.filter(s => s.genre && s.genre.some(g => 
+      g.toLowerCase() === genre.toLowerCase()
+    ));
   }
 
   if (filtered.length === 0) {
@@ -133,7 +139,9 @@ function renderSeriesGrid(filter = 'all', genre = 'all') {
 
 function updateSeriesCount() {
   const el = document.getElementById('seriesCount');
-  if (el) el.textContent = SERIES.length + ' series';
+  if (!el) return;
+  const visible = document.querySelectorAll('.series-card').length;
+  el.textContent = visible + ' series';
 }
 
 // ===== UPDATES =====
@@ -147,8 +155,14 @@ function renderUpdates() {
     return;
   }
 
-  list.innerHTML = SERIES.map(s => {
-    const latest = s.chapters.slice(0, 3);
+  const sorted = [...SERIES].sort((a, b) => {
+    const aLatest = a.chapters[0]?.num || 0;
+    const bLatest = b.chapters[0]?.num || 0;
+    return bLatest - aLatest;
+  });
+
+  list.innerHTML = sorted.map(s => {
+    const latest = [...s.chapters].sort((a, b) => b.num - a.num).slice(0, 3);
     const chaptersHtml = latest.map(c => `
       <a href="reader.html?series=${s.id}&chapter=${c.folder}" class="chapter-row">
         <span class="chapter-name">Chapter ${c.num}</span>
@@ -182,8 +196,22 @@ document.querySelectorAll('.genre-btn').forEach(btn => {
     document.querySelectorAll('.genre-btn').forEach(b => b.classList.remove('active'));
     this.classList.add('active');
     const genre = this.dataset.genre;
-    renderSeriesGrid('all', genre);
+    const params = new URLSearchParams(location.search);
+    const tab = params.get('tab') || 'all';
+    renderSeriesGrid(tab, genre);
   });
+});
+
+// ===== NAV MENU ACTIVE =====
+document.querySelectorAll('.nav-menu a').forEach(a => {
+  const href = a.getAttribute('href');
+  if (href === 'index.html' || href === '/') {
+    if (window.location.pathname.endsWith('index.html') || window.location.pathname === '/') {
+      a.classList.add('active');
+    }
+  } else if (window.location.href.includes(href)) {
+    a.classList.add('active');
+  }
 });
 
 // ===== SEARCH =====
@@ -216,11 +244,4 @@ searchInput?.addEventListener('input', function() {
   searchResult.innerHTML = filtered.map(s =>
     `<a href="series.html?id=${s.id}" class="search-item">${s.title} ⭐${s.rating || '?'} · ${s.type || 'Manhwa'}</a>`
   ).join('');
-});
-
-// ===== NAV MENU ACTIVE =====
-document.querySelectorAll('.nav-menu a').forEach(a => {
-  if (a.href === window.location.href || a.href === window.location.href.split('?')[0]) {
-    a.classList.add('active');
-  }
 });
