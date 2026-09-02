@@ -2,10 +2,14 @@
   {
     "id": "taylor",
     "title": "Taylor",
-    "cover": "series/taylor/cover.jpg",
+    "author": "Penyusun Mimpi",
+    "synopsis": "Taylor adalah seorang gadis biasa yang tiba-tiba bisa melihat makhluk halus. Hidupnya berubah drastis ketika dia bertemu dengan seorang pemburu iblis yang misterius. Petualangan supernatural dimulai!",
+    "genre": ["Action", "Fantasy", "Horror"],
+    "rating": 8.6,
     "flag": "🇰🇷",
-    "type": "manhwa",
+    "type": "Manhwa",
     "status": "Ongoing",
+    "cover": "series/taylor/cover.jpg",
     "chapters": [
       { "num": 9, "folder": "chapter-9" },
       { "num": 8, "folder": "chapter-8" },
@@ -21,10 +25,14 @@
   {
     "id": "kisah-kultivator",
     "title": "Kisah Kultivator Pembantai Demon",
-    "cover": "series/kisah-kultivator/cover.png",
+    "author": "Master Dao",
+    "synopsis": "Seorang kultivator terkuat di dunia kultivasi tiba-tiba terlempar ke dunia modern. Dengan kekuatan dewa, dia harus melindungi dunia dari iblis yang mengancam.",
+    "genre": ["Action", "Fantasy", "Comedy"],
+    "rating": 8.2,
     "flag": "🇰🇷",
-    "type": "manhwa",
+    "type": "Manhwa",
     "status": "Ongoing",
+    "cover": "series/kisah-kultivator/cover.png",
     "chapters": [
       { "num": 1, "folder": "chapter-1" }
     ]
@@ -32,10 +40,14 @@
   {
     "id": "pemuda-abadi",
     "title": "Pemuda Abadi",
-    "cover": "series/pemuda-abadi/cover.png",
+    "author": "Abadi Studio",
+    "synopsis": "Seorang pemuda yang tidak bisa mati. Hidup selama ribuan tahun membuatnya bosan. Namun ketika dunia mulai kacau, dia memutuskan untuk turun tangan.",
+    "genre": ["Action", "Drama", "Romance"],
+    "rating": 7.9,
     "flag": "🇰🇷",
-    "type": "manhwa",
+    "type": "Manhwa",
     "status": "Ongoing",
+    "cover": "series/pemuda-abadi/cover.png",
     "chapters": [
       { "num": 1, "folder": "chapter-1" }
     ]
