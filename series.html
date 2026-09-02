@@ -14,7 +14,9 @@
     </a>
   </header>
 
-  <div id="series-detail"></div>
+  <div id="series-detail">
+    <div class="empty">Loading...</div>
+  </div>
 
   <script>
     (function() {
@@ -22,12 +24,16 @@
       const id = params.get('id');
       const container = document.getElementById('series-detail');
 
+      console.log('📖 Series detail:', id);
+
       fetch('data/series.json')
         .then(r => {
-          if (!r.ok) throw new Error('Gagal fetch: ' + r.status);
+          console.log('📡 Fetch status:', r.status);
+          if (!r.ok) throw new Error('HTTP ' + r.status);
           return r.json();
         })
         .then(data => {
+          console.log('✅ Data loaded, mencari:', id);
           const series = data.find(s => s.id === id);
           if (!series) {
             container.innerHTML = `<div class="empty">Series tidak ditemukan</div>`;
@@ -70,6 +76,7 @@
           `;
         })
         .catch(err => {
+          console.error('❌ Error:', err);
           container.innerHTML = `<div class="empty">Gagal load data: ${err.message}</div>`;
         });
     })();
