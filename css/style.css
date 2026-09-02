@@ -219,6 +219,19 @@ header {
   flex-shrink: 0;
   background: var(--card);
 }
+.slide-cover-fallback {
+  width: 160px;
+  height: 210px;
+  background: linear-gradient(135deg, #2a2a3e, #1a1a2e);
+  border-radius: 10px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48px;
+  font-weight: bold;
+  color: #555;
+}
 .slide-info {
   flex: 1;
 }
@@ -454,6 +467,7 @@ header {
   display: flex;
   align-items: center;
   gap: 6px;
+  flex-wrap: wrap;
 }
 .update-title .up {
   background: var(--popular);
