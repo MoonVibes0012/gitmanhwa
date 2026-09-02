@@ -1,0 +1,43 @@
+[
+  {
+    "id": "taylor",
+    "title": "Taylor",
+    "cover": "series/taylor/cover.jpg",
+    "flag": "🇰🇷",
+    "type": "manhwa",
+    "status": "Ongoing",
+    "chapters": [
+      { "num": 9, "folder": "chapter-9" },
+      { "num": 8, "folder": "chapter-8" },
+      { "num": 7, "folder": "chapter-7" },
+      { "num": 6, "folder": "chapter-6" },
+      { "num": 5, "folder": "chapter-5" },
+      { "num": 4, "folder": "chapter-4" },
+      { "num": 3, "folder": "chapter-3" },
+      { "num": 2, "folder": "chapter-2" },
+      { "num": 1, "folder": "chapter-1" }
+    ]
+  },
+  {
+    "id": "kisah-kultivator",
+    "title": "Kisah Kultivator Pembantai Demon",
+    "cover": "series/kisah-kultivator/cover.png",
+    "flag": "🇰🇷",
+    "type": "manhwa",
+    "status": "Ongoing",
+    "chapters": [
+      { "num": 1, "folder": "chapter-1" }
+    ]
+  },
+  {
+    "id": "pemuda-abadi",
+    "title": "Pemuda Abadi",
+    "cover": "series/pemuda-abadi/cover.png",
+    "flag": "🇰🇷",
+    "type": "manhwa",
+    "status": "Ongoing",
+    "chapters": [
+      { "num": 1, "folder": "chapter-1" }
+    ]
+  }
+]
