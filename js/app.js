@@ -1,8 +1,8 @@
 const SERIES = [
   {
-    id: "hell-login",
-    title: "Hell Login",
-    cover: "series/hell-login/cover.png",
+    id: "taylor",
+    title: "taylor",
+    cover: "series/taylor/cover.png",
     flag: "🇰🇷",
     type: "manhwa",
     status: "Ongoing",
