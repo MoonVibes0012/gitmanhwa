@@ -4,7 +4,7 @@ const SERIES = [
   {
     id: "hell-login",
     title: "Hell Login",
-    cover: "series/hell-login/cover.jpg", // taruh cover.jpg di folder series/hell-login/
+    cover: "series/hell-login/cover.png",
     flag: "🇰🇷",
     type: "manhwa",
     status: "Ongoing",
@@ -17,7 +17,7 @@ const SERIES = [
   {
     id: "kisah-kultivator",
     title: "Kisah Kultivator Pembantai Demon",
-    cover: null,
+    cover: "series/kisah-kultivator/cover.png",
     flag: "🇰🇷",
     type: "manhwa",
     status: "Ongoing",
@@ -28,7 +28,7 @@ const SERIES = [
   {
     id: "pemuda-abadi",
     title: "Pemuda Abadi",
-    cover: null,
+    cover: "series/pemuda-abadi/cover.png",
     flag: "🇰🇷",
     type: "manhwa",
     status: "Ongoing",
@@ -46,7 +46,7 @@ function renderSeriesGrid(filter = "manhwa") {
   grid.innerHTML = filtered.map(s => `
     <a href="series.html?id=${s.id}" class="series-card">
       <div class="series-cover">
-        ${s.cover ? `<img src="${s.cover}" alt="${s.title}" style="width:100%;height:100%;object-fit:cover">` : s.title}
+        \( {s.cover ? `<img src=" \){s.cover}" alt="${s.title}" style="width:100%;height:100%;object-fit:cover">` : s.title}
         <span class="flag">${s.flag}</span>
       </div>
       <div class="series-meta">
@@ -63,11 +63,10 @@ function renderSeriesGrid(filter = "manhwa") {
 function renderUpdates() {
   const list = document.getElementById("update-list");
   if (!list) return;
-  // Ambil series yang punya chapter terbaru
   list.innerHTML = SERIES.filter(s => s.chapters.length).map(s => `
     <div class="update-item">
       <div class="update-cover">
-        ${s.cover ? `<img src="${s.cover}" style="width:100%;height:100%;object-fit:cover;border-radius:6px">` : s.title.slice(0,8)}
+        \( {s.cover ? `<img src=" \){s.cover}" style="width:100%;height:100%;object-fit:cover;border-radius:6px">` : s.title.slice(0,8)}
       </div>
       <div class="update-info">
         <div class="update-title">
@@ -75,7 +74,7 @@ function renderUpdates() {
         </div>
         <div class="chapter-list">
           ${s.chapters.slice(0,3).map(c => `
-            <a href="reader.html?series=${s.id}&chapter=${c.folder}" class="chapter-row">
+            <a href="reader.html?series=\( {s.id}&chapter= \){c.folder}" class="chapter-row">
               <span class="chapter-name">Chapter ${c.num}</span>
               <span class="chapter-time">${c.time}</span>
             </a>
