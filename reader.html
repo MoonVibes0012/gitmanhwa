@@ -46,6 +46,7 @@
       let seriesData = null;
       let chapters = [];
       let currentIndex = -1;
+      let loadCancel = false;
 
       backBtn.addEventListener('click', function(e) {
         e.preventDefault();
@@ -64,6 +65,7 @@
           titleEl.textContent = seriesData.title;
 
           // Isi dropdown
+          chapterSelect.innerHTML = '';
           chapters.forEach((c, i) => {
             const opt = document.createElement('option');
             opt.value = i;
@@ -92,28 +94,38 @@
         });
 
       function loadChapter(index) {
+        // BATALIN LOAD SEBELUMNYA
+        loadCancel = true;
+        setTimeout(() => { loadCancel = false; }, 100);
+
         const ch = chapters[index];
         if (!ch) return;
+
+        // RESET PAGES
         pagesEl.innerHTML = '';
         const base = 'series/' + seriesId + '/' + ch.folder + '/';
         let pageNum = 1;
         const maxTry = 80;
         const formats = ['jpg', 'png', 'webp', 'bmp'];
         let formatIndex = 0;
+        let isActive = true;
 
         function pad(n) { return n.toString().padStart(2, '0'); }
 
         function tryLoad() {
-          if (pageNum > maxTry) return;
+          if (!isActive || loadCancel || pageNum > maxTry) return;
           const img = new Image();
-          img.src = base + pad(pageNum) + '.' + formats[formatIndex];
+          const src = base + pad(pageNum) + '.' + formats[formatIndex];
+          img.src = src;
           img.onload = function() {
+            if (!isActive || loadCancel) return;
             pagesEl.appendChild(img);
             pageNum++;
             formatIndex = 0;
             tryLoad();
           };
           img.onerror = function() {
+            if (!isActive || loadCancel) return;
             formatIndex++;
             if (formatIndex < formats.length) {
               tryLoad();
@@ -127,15 +139,19 @@
 
         let firstTry = 0;
         function firstLoad() {
+          if (!isActive || loadCancel) return;
           const img = new Image();
-          img.src = base + pad(1) + '.' + formats[firstTry % formats.length];
+          const src = base + pad(1) + '.' + formats[firstTry % formats.length];
+          img.src = src;
           img.onload = function() {
+            if (!isActive || loadCancel) return;
             pagesEl.appendChild(img);
             pageNum = 2;
             formatIndex = 0;
             tryLoad();
           };
           img.onerror = function() {
+            if (!isActive || loadCancel) return;
             firstTry++;
             if (firstTry < 10) {
               firstLoad();
@@ -146,22 +162,34 @@
         }
         firstLoad();
 
+        // Simpan progress
         try {
           localStorage.setItem('gitmanhwa_progress_' + seriesId, JSON.stringify({
             chapter: ch.folder,
             scrollY: 0
           }));
         } catch(e) {}
+
+        // Cleanup
+        return function() {
+          isActive = false;
+        };
       }
 
       function updateNav() {
         indicator.textContent = (currentIndex + 1) + ' / ' + chapters.length;
         prevBtn.disabled = currentIndex === chapters.length - 1;
         nextBtn.disabled = currentIndex === 0;
-        chapterSelect.value = currentIndex;
+        if (chapterSelect) chapterSelect.value = currentIndex;
       }
 
-      prevBtn.addEventListener('click', function() {
+      // Hapus semua listener lama dengan clone
+      const newPrev = prevBtn.cloneNode(true);
+      const newNext = nextBtn.cloneNode(true);
+      prevBtn.parentNode.replaceChild(newPrev, prevBtn);
+      nextBtn.parentNode.replaceChild(newNext, nextBtn);
+
+      newPrev.addEventListener('click', function() {
         if (currentIndex < chapters.length - 1) {
           currentIndex++;
           const ch = chapters[currentIndex];
@@ -172,7 +200,7 @@
         }
       });
 
-      nextBtn.addEventListener('click', function() {
+      newNext.addEventListener('click', function() {
         if (currentIndex > 0) {
           currentIndex--;
           const ch = chapters[currentIndex];
@@ -185,8 +213,8 @@
 
       // Keyboard shortcut
       document.addEventListener('keydown', function(e) {
-        if (e.key === 'ArrowLeft') prevBtn.click();
-        if (e.key === 'ArrowRight') nextBtn.click();
+        if (e.key === 'ArrowLeft') newPrev.click();
+        if (e.key === 'ArrowRight') newNext.click();
       });
 
       window.addEventListener('load', function() {
