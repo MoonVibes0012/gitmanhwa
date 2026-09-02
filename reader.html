@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Reader - GITMANHWA</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="reader-header">
+    <a href="javascript:history.back()">←</a>
+    <div class="reader-title" id="reader-title">Loading...</div>
+  </div>
+
+  <div class="reader-pages" id="pages">
+    <!-- pages di-load otomatis dari folder chapter -->
+  </div>
+
+  <script src="js/app.js"></script>
+  <script>
+    const params = new URLSearchParams(location.search);
+    const seriesId = params.get("series");
+    const chapterFolder = params.get("chapter"); // contoh: chapter-1
+
+    const series = SERIES.find(s => s.id === seriesId);
+    const titleEl = document.getElementById("reader-title");
+    const pagesEl = document.getElementById("pages");
+
+    if (!series || !chapterFolder) {
+      titleEl.textContent = "Chapter tidak ditemukan";
+      pagesEl.innerHTML = `<div class="empty">Parameter salah</div>`;
+    } else {
+      const chNum = chapterFolder.replace("chapter-", "");
+      titleEl.textContent = `${series.title} · Ch.${chNum}`;
+
+      // Load sequential images: 01.jpg, 02.jpg ... sampai gagal
+      // Struktur GitHub: series/<id>/<chapter-folder>/01.jpg , 02.jpg , 03.jpg ...
+      const base = `series/${seriesId}/${chapterFolder}/`;
+      let page = 1;
+      const maxTry = 80; // safety
+
+      function pad(n) {
+        return n.toString().padStart(2, "0");
+      }
+
+      function loadNext() {
+        if (page > maxTry) return;
+        const img = new Image();
+        const src = base + pad(page) + ".jpg";
+        img.src = src;
+        img.onload = () => {
+          pagesEl.appendChild(img);
+          page++;
+          loadNext();
+        };
+        img.onerror = () => {
+          // coba .png juga
+          const imgPng = new Image();
+          imgPng.src = base + pad(page) + ".png";
+          imgPng.onload = () => {
+            pagesEl.appendChild(imgPng);
+            page++;
+            loadNext();
+          };
+          imgPng.onerror = () => {
+            if (page === 1) {
+              pagesEl.innerHTML = `
+                <div class="empty">
+                  Tidak ada gambar di folder<br>
+                  <code>${base}</code><br><br>
+                  Taruh file 01.jpg, 02.jpg, 03.jpg ... di situ
+                </div>`;
+            }
+          };
+        };
+      }
+      loadNext();
+    }
+  </script>
+</body>
+</html>
