@@ -13,10 +13,19 @@
       <span>GITMANHWA</span>
     </a>
     <div class="header-actions">
-      <div class="icon-btn">🔍</div>
+      <div class="icon-btn" id="searchBtn">🔍</div>
       <div class="icon-btn">⬆</div>
     </div>
   </header>
+
+  <!-- Search Modal -->
+  <div class="modal" id="searchModal">
+    <div class="modal-content">
+      <input type="text" id="searchInput" placeholder="Cari judul...">
+      <div id="searchResult"></div>
+      <button class="close-modal" id="closeSearch">Tutup</button>
+    </div>
+  </div>
 
   <section class="featured">
     <div class="featured-card">
