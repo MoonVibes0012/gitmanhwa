@@ -1,7 +1,6 @@
 let SERIES = [];
 
-// Load data
-fetch('../data/series.json')
+fetch('/data/series.json')
   .then(r => r.json())
   .then(data => {
     SERIES = data;
@@ -16,7 +15,7 @@ function renderSeriesGrid(filter = 'manhwa') {
   const filtered = SERIES.filter(s => s.type === filter);
   grid.innerHTML = filtered.map(s => {
     const cover = s.cover || '';
-    return `<a href="series.html?id=${s.id}" class="series-card">
+    return `<a href="/series.html?id=${s.id}" class="series-card">
       <div class="series-cover">
         <img src="${cover}" alt="${s.title}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
         <div class="cover-fallback" style="display:none;width:100%;height:100%;background:linear-gradient(135deg,#2a2a3e,#1a1a2e);align-items:center;justify-content:center;font-size:24px;font-weight:bold;color:#666">${s.title.charAt(0)}</div>
@@ -35,7 +34,7 @@ function renderUpdates() {
   if (!list) return;
   list.innerHTML = SERIES.filter(s => s.chapters.length).map(s => {
     const chaptersHtml = s.chapters.slice(0, 3).map(c =>
-      `<a href="reader.html?series=${s.id}&chapter=${c.folder}" class="chapter-row">
+      `<a href="/reader.html?series=${s.id}&chapter=${c.folder}" class="chapter-row">
         <span class="chapter-name">Chapter ${c.num}</span>
         <span class="chapter-time">baru</span>
       </a>`
@@ -52,7 +51,6 @@ function renderUpdates() {
   }).join('');
 }
 
-// Tabs
 document.querySelectorAll('.tab[data-tab]').forEach(btn => {
   btn.addEventListener('click', function() {
     document.querySelectorAll('.tab[data-tab]').forEach(b => b.classList.remove('active'));
@@ -61,33 +59,41 @@ document.querySelectorAll('.tab[data-tab]').forEach(btn => {
   });
 });
 
-// Search
+// SEARCH
 const searchBtn = document.getElementById('searchBtn');
 const searchModal = document.getElementById('searchModal');
 const searchInput = document.getElementById('searchInput');
 const searchResult = document.getElementById('searchResult');
 const closeSearch = document.getElementById('closeSearch');
 
-searchBtn.addEventListener('click', function() {
-  searchModal.classList.add('show');
-  searchInput.focus();
-  searchResult.innerHTML = '';
-  searchInput.value = '';
-});
+if (searchBtn) {
+  searchBtn.addEventListener('click', function() {
+    searchModal.classList.add('show');
+    searchInput.focus();
+    searchResult.innerHTML = '';
+    searchInput.value = '';
+  });
+}
 
-closeSearch.addEventListener('click', function() {
-  searchModal.classList.remove('show');
-});
+if (closeSearch) {
+  closeSearch.addEventListener('click', function() {
+    searchModal.classList.remove('show');
+  });
+}
 
-searchModal.addEventListener('click', function(e) {
-  if (e.target === this) searchModal.classList.remove('show');
-});
+if (searchModal) {
+  searchModal.addEventListener('click', function(e) {
+    if (e.target === this) searchModal.classList.remove('show');
+  });
+}
 
-searchInput.addEventListener('input', function() {
-  const q = this.value.toLowerCase().trim();
-  if (!q) { searchResult.innerHTML = ''; return; }
-  const filtered = SERIES.filter(s => s.title.toLowerCase().includes(q));
-  searchResult.innerHTML = filtered.map(s =>
-    `<a href="series.html?id=${s.id}" class="search-item">${s.title} (${s.type})</a>`
-  ).join('');
-});
+if (searchInput) {
+  searchInput.addEventListener('input', function() {
+    const q = this.value.toLowerCase().trim();
+    if (!q) { searchResult.innerHTML = ''; return; }
+    const filtered = SERIES.filter(s => s.title.toLowerCase().includes(q));
+    searchResult.innerHTML = filtered.map(s =>
+      `<a href="/series.html?id=${s.id}" class="search-item">${s.title} (${s.type})</a>`
+    ).join('');
+  });
+}
