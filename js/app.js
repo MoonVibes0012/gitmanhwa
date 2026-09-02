@@ -2,7 +2,7 @@ const SERIES = [
   {
     id: "taylor",
     title: "taylor",
-    cover: "series/taylor/cover.png",
+    cover: "series/taylor/cover.jpg",
     flag: "🇰🇷",
     type: "manhwa",
     status: "Ongoing",
