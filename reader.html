@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Reader - GITMANHWA</title>
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
   <div class="reader-header">
@@ -20,7 +20,7 @@
     <button id="nextChapter">Berikutnya ›</button>
   </div>
 
-  <script src="js/app.js"></script>
+  <script src="/js/app.js"></script>
   <script>
     (function() {
       const params = new URLSearchParams(location.search);
@@ -37,12 +37,12 @@
       let chapters = [];
       let currentIndex = -1;
 
-      fetch('../data/series.json')
+      fetch('/data/series.json')
         .then(r => r.json())
         .then(data => {
           seriesData = data.find(s => s.id === seriesId);
           if (!seriesData) throw new Error('Series tidak ditemukan');
-          chapters = seriesData.chapters.sort((a,b) => b.num - a.num); // descending
+          chapters = seriesData.chapters.sort((a,b) => b.num - a.num);
           currentIndex = chapters.findIndex(c => c.folder === chapterFolder);
           if (currentIndex === -1) currentIndex = 0;
           titleEl.textContent = seriesData.title + ' · Ch.' + chapters[currentIndex].num;
@@ -57,7 +57,7 @@
         const ch = chapters[index];
         if (!ch) return;
         pagesEl.innerHTML = '';
-        const base = `../series/${seriesId}/${ch.folder}/`;
+        const base = `/series/${seriesId}/${ch.folder}/`;
         let pageNum = 1;
         const maxTry = 80;
         const formats = ['jpg', 'png', 'webp', 'bmp'];
@@ -90,7 +90,6 @@
           };
         }
 
-        // coba 5 kali untuk halaman pertama, kalau gagal semua => empty
         let firstTry = 0;
         function firstLoad() {
           const img = new Image();
@@ -114,7 +113,6 @@
         }
         firstLoad();
 
-        // Simpan progress
         try {
           localStorage.setItem('gitmanhwa_progress_' + seriesId, JSON.stringify({
             chapter: ch.folder,
@@ -133,7 +131,7 @@
         if (currentIndex > 0) {
           currentIndex--;
           const ch = chapters[currentIndex];
-          history.pushState(null, '', `reader.html?series=${seriesId}&chapter=${ch.folder}`);
+          history.pushState(null, '', '/reader.html?series=' + seriesId + '&chapter=' + ch.folder);
           loadChapter(currentIndex);
           updateNav();
           window.scrollTo(0, 0);
@@ -144,14 +142,13 @@
         if (currentIndex < chapters.length - 1) {
           currentIndex++;
           const ch = chapters[currentIndex];
-          history.pushState(null, '', `reader.html?series=${seriesId}&chapter=${ch.folder}`);
+          history.pushState(null, '', '/reader.html?series=' + seriesId + '&chapter=' + ch.folder);
           loadChapter(currentIndex);
           updateNav();
           window.scrollTo(0, 0);
         }
       });
 
-      // Restore scroll position jika ada
       window.addEventListener('load', function() {
         try {
           const saved = localStorage.getItem('gitmanhwa_progress_' + seriesId);
