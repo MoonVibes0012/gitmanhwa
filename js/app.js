@@ -30,6 +30,7 @@ function renderAll() {
   renderSeriesGrid(tab, genre);
   renderUpdates();
   updateSeriesCount();
+  updateNavActive();
 }
 
 // ===== SLIDER =====
@@ -100,12 +101,14 @@ function renderSeriesGrid(tab = 'all', genre = 'all') {
 
   let filtered = [...SERIES];
 
+  // TAB FILTER
   if (tab === 'populer') {
     filtered = filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0));
   } else if (tab === 'selesai') {
     filtered = filtered.filter(s => s.status === 'Completed' || s.status === 'Selesai');
   }
 
+  // GENRE FILTER
   if (genre !== 'all') {
     filtered = filtered.filter(s => s.genre && s.genre.some(g => 
       g.toLowerCase() === genre.toLowerCase()
@@ -190,6 +193,26 @@ function renderUpdates() {
   }).join('');
 }
 
+// ===== NAV ACTIVE =====
+function updateNavActive() {
+  const params = new URLSearchParams(location.search);
+  const tab = params.get('tab') || 'all';
+  
+  document.querySelectorAll('.nav-menu a').forEach(a => {
+    a.classList.remove('active');
+    const href = a.getAttribute('href');
+    if (href === 'index.html' && !tab) {
+      a.classList.add('active');
+    } else if (href === 'index.html?tab=all' && tab === 'all') {
+      a.classList.add('active');
+    } else if (href === 'index.html?tab=populer' && tab === 'populer') {
+      a.classList.add('active');
+    } else if (href === 'index.html?tab=selesai' && tab === 'selesai') {
+      a.classList.add('active');
+    }
+  });
+}
+
 // ===== GENRE FILTER =====
 document.querySelectorAll('.genre-btn').forEach(btn => {
   btn.addEventListener('click', function() {
@@ -200,18 +223,6 @@ document.querySelectorAll('.genre-btn').forEach(btn => {
     const tab = params.get('tab') || 'all';
     renderSeriesGrid(tab, genre);
   });
-});
-
-// ===== NAV MENU ACTIVE =====
-document.querySelectorAll('.nav-menu a').forEach(a => {
-  const href = a.getAttribute('href');
-  if (href === 'index.html' || href === '/') {
-    if (window.location.pathname.endsWith('index.html') || window.location.pathname === '/') {
-      a.classList.add('active');
-    }
-  } else if (window.location.href.includes(href)) {
-    a.classList.add('active');
-  }
 });
 
 // ===== SEARCH =====
@@ -245,3 +256,7 @@ searchInput?.addEventListener('input', function() {
     `<a href="series.html?id=${s.id}" class="search-item">${s.title} ⭐${s.rating || '?'} · ${s.type || 'Manhwa'}</a>`
   ).join('');
 });
+
+// ===== INIT =====
+// Jalankan updateNavActive setelah render
+setTimeout(updateNavActive, 100);
