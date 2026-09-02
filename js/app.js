@@ -42,51 +42,49 @@ function renderSeriesGrid(filter = "manhwa") {
 
   const filtered = SERIES.filter(s => s.type === filter);
 
-  grid.innerHTML = filtered.map(s => `
-    <a href="series.html?id=${s.id}" class="series-card">
-      <div class="series-cover">
-        <img src="\( {s.cover}" alt=" \){s.title}" style="width:100%;height:100%;object-fit:cover">
-        <span class="flag">${s.flag}</span>
-      </div>
-      <div class="series-meta">
-        <div class="series-title">${s.title}</div>
-        <div class="series-info">
-          <span>⏱ ${s.chapters[0]?.time || "-"}</span>
-        </div>
-      </div>
-    </a>
-  `).join("");
+  grid.innerHTML = filtered.map(s => {
+    return '<a href="series.html?id=' + s.id + '" class="series-card">' +
+      '<div class="series-cover">' +
+        '<img src="' + s.cover + '" alt="' + s.title + '" style="width:100%;height:100%;object-fit:cover">' +
+        '<span class="flag">' + s.flag + '</span>' +
+      '</div>' +
+      '<div class="series-meta">' +
+        '<div class="series-title">' + s.title + '</div>' +
+        '<div class="series-info"><span>⏱ ' + (s.chapters[0] ? s.chapters[0].time : '-') + '</span></div>' +
+      '</div>' +
+    '</a>';
+  }).join('');
 }
 
 function renderUpdates() {
   const list = document.getElementById("update-list");
   if (!list) return;
 
-  list.innerHTML = SERIES.filter(s => s.chapters.length).map(s => `
-    <div class="update-item">
-      <div class="update-cover">
-        <img src="${s.cover}" style="width:100%;height:100%;object-fit:cover;border-radius:6px">
-      </div>
-      <div class="update-info">
-        <div class="update-title">
-          <span class="up">UP</span> ${s.title}
-        </div>
-        <div class="chapter-list">
-          ${s.chapters.slice(0, 3).map(c => `
-            <a href="reader.html?series=\( {s.id}&chapter= \){c.folder}" class="chapter-row">
-              <span class="chapter-name">Chapter ${c.num}</span>
-              <span class="chapter-time">${c.time}</span>
-            </a>
-          `).join("")}
-        </div>
-      </div>
-    </div>
-  `).join("");
+  list.innerHTML = SERIES.filter(s => s.chapters.length).map(s => {
+    let chaptersHtml = s.chapters.slice(0, 3).map(c => {
+      return '<a href="reader.html?series=' + s.id + '&chapter=' + c.folder + '" class="chapter-row">' +
+        '<span class="chapter-name">Chapter ' + c.num + '</span>' +
+        '<span class="chapter-time">' + c.time + '</span>' +
+      '</a>';
+    }).join('');
+
+    return '<div class="update-item">' +
+      '<div class="update-cover">' +
+        '<img src="' + s.cover + '" style="width:100%;height:100%;object-fit:cover;border-radius:6px">' +
+      '</div>' +
+      '<div class="update-info">' +
+        '<div class="update-title"><span class="up">UP</span> ' + s.title + '</div>' +
+        '<div class="chapter-list">' + chaptersHtml + '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
 }
 
-document.querySelectorAll(".tab[data-tab]").forEach(btn => {
-  btn.addEventListener("click", () => {
-    document.querySelectorAll(".tab[data-tab]").forEach(b => b.classList.remove("active"));
+document.querySelectorAll(".tab[data-tab]").forEach(function(btn) {
+  btn.addEventListener("click", function() {
+    document.querySelectorAll(".tab[data-tab]").forEach(function(b) {
+      b.classList.remove("active");
+    });
     btn.classList.add("active");
     renderSeriesGrid(btn.dataset.tab);
   });
