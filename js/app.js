@@ -10,12 +10,12 @@ const SERIES = [
       { num: 9, folder: "chapter-9", time: "15 mnt lalu" },
       { num: 8, folder: "chapter-8", time: "7 hari lalu" },
       { num: 7, folder: "chapter-7", time: "14 hari lalu" },
-      { num: 6, folder: "chapter-9", time: "1 bulan lalu" },
-      { num: 5, folder: "chapter-9", time: "1 bulan lalu" },
-      { num: 4, folder: "chapter-9", time: "1 bulan lalu" },
-      { num: 3, folder: "chapter-9", time: "1 bulan lalu" },
-      { num: 2, folder: "chapter-9", time: "1 bulan lalu" },
-      { num: 1, folder: "chapter-9", time: "1 bulan lalu" },
+      { num: 6, folder: "chapter-6", time: "1 bulan lalu" },
+      { num: 5, folder: "chapter-5", time: "1 bulan lalu" },
+      { num: 4, folder: "chapter-4", time: "1 bulan lalu" },
+      { num: 3, folder: "chapter-3", time: "1 bulan lalu" },
+      { num: 2, folder: "chapter-2", time: "1 bulan lalu" },
+      { num: 1, folder: "chapter-1", time: "1 bulan lalu" },
     ]
   },
   {
