@@ -2,7 +2,7 @@
   {
     "id": "taylor",
     "title": "Taylor",
-    "cover": "/series/taylor/cover.jpg",
+    "cover": "series/taylor/cover.jpg",
     "flag": "🇰🇷",
     "type": "manhwa",
     "status": "Ongoing",
@@ -21,7 +21,7 @@
   {
     "id": "kisah-kultivator",
     "title": "Kisah Kultivator Pembantai Demon",
-    "cover": "/series/kisah-kultivator/cover.png",
+    "cover": "series/kisah-kultivator/cover.png",
     "flag": "🇰🇷",
     "type": "manhwa",
     "status": "Ongoing",
@@ -32,7 +32,7 @@
   {
     "id": "pemuda-abadi",
     "title": "Pemuda Abadi",
-    "cover": "/series/pemuda-abadi/cover.png",
+    "cover": "series/pemuda-abadi/cover.png",
     "flag": "🇰🇷",
     "type": "manhwa",
     "status": "Ongoing",
