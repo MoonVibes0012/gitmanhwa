@@ -8,23 +8,16 @@
 </head>
 <body>
 
-  <!-- ===== HEADER ===== -->
+  <!-- ===== HEADER (Sederhana) ===== -->
   <header>
     <div class="header-container">
       <a href="index.html" class="logo">
         <div class="logo-icon">🦈</div>
         <span>GITMANHWA</span>
       </a>
-
-      <nav class="nav-menu">
-        <a href="index.html">Beranda</a>
-        <a href="index.html?tab=all">Daftar Series</a>
-        <a href="index.html?tab=populer">Populer</a>
-        <a href="index.html?tab=selesai">Selesai</a>
-      </nav>
-
       <div class="header-actions">
         <div class="icon-btn" id="searchBtn">🔍</div>
+        <div class="icon-btn" id="profileBtn">👤</div>
       </div>
     </div>
   </header>
@@ -59,6 +52,18 @@
     </div>
   </section>
 
+  <!-- ===== PENGUMUMAN (Sesuai foto) ===== -->
+  <section class="section announcement-section">
+    <div class="section-header">
+      <h3 class="section-title">Pengumuman</h3>
+      <span class="see-all">Semua</span>
+    </div>
+    <div class="announcement-card">
+      <div class="announcement-cover">🦈</div>
+      <div class="announcement-text">Premium Sekarang Cuma 12500!!!</div>
+    </div>
+  </section>
+
   <!-- ===== SERIES GRID ===== -->
   <section class="section">
     <div class="section-header">
@@ -82,9 +87,35 @@
 
   <!-- ===== FOOTER ===== -->
   <footer>
-    <p>🦈 GITMANHWA &copy; 2026 — Baca Manhwa, Manga, Manhua Gratis</p>
+    <p>🦈 GITMANHWA &copy; 2026</p>
   </footer>
 
+  <!-- ===== BOTTOM NAVIGATION (Baru) ===== -->
+  <nav class="bottom-nav">
+    <a href="index.html" class="nav-item active" data-page="home">
+      <span class="nav-icon">🏠</span>
+      <span class="nav-label">Home</span>
+    </a>
+    <a href="index.html?tab=explore" class="nav-item" data-page="explore">
+      <span class="nav-icon">🧭</span>
+      <span class="nav-label">Explore</span>
+    </a>
+    <a href="index.html?tab=library" class="nav-item" data-page="library">
+      <span class="nav-icon">📚</span>
+      <span class="nav-label">Library</span>
+    </a>
+    <a href="index.html?tab=all" class="nav-item" data-page="all">
+      <span class="nav-icon">🔍</span>
+      <span class="nav-label">All Series</span>
+    </a>
+  </nav>
+
+  <script>
+    // Blokir copy & cut
+    document.addEventListener('copy', (e) => e.preventDefault());
+    document.addEventListener('cut', (e) => e.preventDefault());
+    document.addEventListener('contextmenu', (e) => e.preventDefault());
+  </script>
   <script src="js/app.js"></script>
 </body>
 </html>
