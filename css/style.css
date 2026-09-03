@@ -20,6 +20,10 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
 
 html,
@@ -34,6 +38,7 @@ body {
   color: var(--text);
   min-height: 100vh;
   line-height: 1.5;
+  padding-bottom: 70px; /* agar konten tidak tertutup bottom nav */
 }
 
 /* ===== HEADER ===== */
@@ -80,30 +85,6 @@ header {
   color: #fff;
 }
 
-.nav-menu {
-  display: flex;
-  gap: 14px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.nav-menu a {
-  color: var(--muted);
-  text-decoration: none;
-  font-size: 13px;
-  font-weight: 500;
-  transition: 0.2s;
-  padding: 4px 0;
-  border-bottom: 2px solid transparent;
-  white-space: nowrap;
-}
-
-.nav-menu a:hover,
-.nav-menu a.active {
-  color: var(--text);
-  border-bottom-color: var(--accent);
-}
-
 .header-actions {
   display: flex;
   gap: 6px;
@@ -124,6 +105,7 @@ header {
   font-size: 15px;
   transition: 0.2s;
   flex-shrink: 0;
+  pointer-events: auto;
 }
 .icon-btn:hover {
   background: var(--card2);
@@ -142,9 +124,13 @@ header {
   z-index: 999;
   align-items: center;
   justify-content: center;
+  pointer-events: none;
+  opacity: 0;
 }
 .modal.show {
   display: flex;
+  pointer-events: auto;
+  opacity: 1;
 }
 
 .modal-content {
@@ -303,6 +289,7 @@ header {
   text-decoration: none;
   font-weight: 600;
   font-size: 13px;
+  pointer-events: auto;
 }
 .slide-btn:hover {
   background: var(--accent2);
@@ -350,6 +337,7 @@ header {
   cursor: pointer;
   transition: 0.2s;
   flex-shrink: 0;
+  pointer-events: auto;
 }
 .genre-btn:hover {
   border-color: var(--accent);
@@ -387,6 +375,46 @@ header {
 .section-count {
   font-size: 12px;
   color: var(--muted);
+}
+
+.see-all {
+  font-size: 13px;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+/* ===== PENGUMUMAN ===== */
+.announcement-section {
+  padding-bottom: 8px;
+}
+
+.announcement-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--card);
+  border-radius: 12px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  cursor: pointer;
+}
+
+.announcement-cover {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.announcement-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
 }
 
 /* ===== SERIES GRID ===== */
@@ -430,6 +458,7 @@ header {
   color: inherit;
   transition: 0.3s;
   width: 100%;
+  pointer-events: auto;
 }
 .series-card:hover {
   border-color: var(--accent);
@@ -449,6 +478,11 @@ header {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 0.3s;
+}
+
+.series-card:hover .series-cover img {
+  transform: scale(1.05);
 }
 
 .series-cover .flag {
@@ -519,6 +553,7 @@ header {
   border: 1px solid var(--border);
   transition: 0.2s;
   width: 100%;
+  pointer-events: auto;
 }
 .update-item:hover {
   border-color: var(--accent);
@@ -542,6 +577,7 @@ header {
 .update-info {
   flex: 1;
   min-width: 0;
+  pointer-events: auto;
 }
 
 .update-title {
@@ -576,18 +612,20 @@ header {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  pointer-events: auto;
 }
 
 .chapter-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  display: block;
   font-size: 12px;
-  padding: 3px 0;
+  padding: 6px 0;
   border-bottom: 1px solid var(--border);
   text-decoration: none;
   color: var(--text);
   word-break: break-word;
+  cursor: pointer;
+  pointer-events: auto !important;
+  width: 100%;
 }
 .chapter-row:last-child {
   border-bottom: none;
@@ -596,10 +634,14 @@ header {
   color: var(--accent2);
 }
 
+.chapter-name {
+  display: inline-block;
+}
+
 .chapter-time {
   color: var(--muted);
   font-size: 11px;
-  flex-shrink: 0;
+  float: right;
 }
 
 /* ===== SERIES DETAIL ===== */
@@ -733,6 +775,7 @@ header {
   font-weight: 600;
   transition: 0.2s;
   word-break: break-word;
+  pointer-events: auto;
 }
 .chapter-btn:hover {
   border-color: var(--accent);
@@ -759,6 +802,7 @@ header {
   text-decoration: none;
   font-size: 20px;
   padding: 0 4px;
+  pointer-events: auto;
 }
 
 .reader-title {
@@ -780,6 +824,7 @@ header {
   font-size: 13px;
   cursor: pointer;
   max-width: 140px;
+  pointer-events: auto;
 }
 .chapter-select:focus {
   outline: none;
@@ -829,6 +874,7 @@ header {
   font-size: 13px;
   transition: 0.2s;
   flex-shrink: 0;
+  pointer-events: auto;
 }
 .reader-nav button:hover:not(:disabled) {
   background: var(--accent2);
@@ -843,6 +889,55 @@ header {
   font-size: 13px;
   text-align: center;
   flex: 1;
+}
+
+/* ===== BOTTOM NAVIGATION ===== */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 60px;
+  background: var(--bg2);
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  z-index: 200;
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  color: var(--muted);
+  font-size: 10px;
+  padding: 6px 0;
+  flex: 1;
+  transition: 0.2s;
+}
+
+.nav-icon {
+  font-size: 20px;
+  margin-bottom: 2px;
+}
+
+.nav-label {
+  font-weight: 600;
+}
+
+.nav-item:hover {
+  color: var(--text);
+}
+
+.nav-item.active {
+  color: var(--accent2);
+}
+
+.nav-item.active .nav-icon {
+  filter: drop-shadow(0 0 6px var(--accent-glow));
 }
 
 /* ===== EMPTY & MISC ===== */
@@ -917,12 +1012,14 @@ footer {
     font-size: 12px;
   }
 
-  .nav-menu {
+  .series-grid {
     gap: 8px;
   }
+}
 
-  .nav-menu a {
-    font-size: 11px;
+@media (max-width: 360px) {
+  .header-container {
+    height: 50px;
   }
 
   .logo {
@@ -933,30 +1030,6 @@ footer {
     width: 26px;
     height: 26px;
     font-size: 13px;
-  }
-
-  .series-grid {
-    gap: 8px;
-  }
-}
-
-@media (max-width: 360px) {
-  .header-container {
-    flex-wrap: wrap;
-    height: auto;
-    padding: 8px 0;
-    gap: 6px;
-  }
-
-  .nav-menu {
-    order: 3;
-    width: 100%;
-    justify-content: center;
-    gap: 6px;
-  }
-
-  .nav-menu a {
-    font-size: 10px;
   }
 
   .slide-cover,
