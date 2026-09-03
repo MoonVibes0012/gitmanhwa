@@ -23,7 +23,7 @@
   <!-- ===== NAVIGASI ===== -->
   <div class="reader-nav">
     <button id="prevChapter">‹ Sebelumnya</button>
-    <span id="chapterIndicator">1 / 1</span>
+    <span id="chapterIndicator">1 / ?</span>
     <button id="nextChapter">Berikutnya ›</button>
   </div>
 
@@ -48,7 +48,7 @@
 
       let chapters = [];
       let currentIndex = -1;
-      let isLoading = false;
+      let totalPagesFound = 0;
 
       backBtn.addEventListener('click', function(e) {
         e.preventDefault();
@@ -81,105 +81,171 @@
               currentIndex = idx;
               const ch = chapters[currentIndex];
               history.pushState(null, '', 'reader.html?series=' + seriesId + '&chapter=' + ch.folder);
-              resetAndLoadChapter(currentIndex);
+              loadChapter(currentIndex);
               window.scrollTo(0, 0);
             }
           });
 
-          resetAndLoadChapter(currentIndex);
+          loadChapter(currentIndex);
         })
         .catch(err => {
           pagesEl.innerHTML = `<div class="empty">Error: ${err.message}</div>`;
         });
 
-      function resetAndLoadChapter(index) {
-        pagesEl.innerHTML = '';
-        isLoading = false;
-        loadChapter(index);
-        updateNav();
+      // ===== SCAN CEPAT: Coba .jpg dulu, kalau gagal coba format lain =====
+      function fastScanPage(base, pageNum) {
+        return new Promise((resolve) => {
+          const pad = String(pageNum).padStart(2, '0');
+          // Coba jpg dulu (paling umum)
+          const img = new Image();
+          img.onload = () => resolve(base + pad + '.jpg');
+          img.onerror = () => {
+            // Kalau jpg gagal, coba format lain (png, webp, jpeg, bmp)
+            const formats = ['png', 'webp', 'jpeg', 'bmp'];
+            let attempt = 0;
+            const tryFormat = () => {
+              if (attempt >= formats.length) {
+                resolve(null);
+                return;
+              }
+              const img2 = new Image();
+              img2.onload = () => resolve(base + pad + '.' + formats[attempt]);
+              img2.onerror = () => {
+                attempt++;
+                tryFormat();
+              };
+              img2.src = base + pad + '.' + formats[attempt];
+            };
+            tryFormat();
+          };
+          img.src = base + pad + '.jpg';
+        });
       }
 
+      // ===== RENDER PER 40 HALAMAN =====
       function loadChapter(index) {
         const ch = chapters[index];
         if (!ch) return;
+
+        // Reset
+        pagesEl.innerHTML = '<div class="empty">Memuat gambar...</div>';
         const base = 'series/' + seriesId + '/' + ch.folder + '/';
-        const formats = ['webp', 'jpg', 'png', 'jpeg', 'bmp'];
-        const batchSize = 10;
-        const maxPages = 150;
+        totalPagesFound = 0;
+        let stopScan = false;
 
-        function pad(n) { return String(n).padStart(2, '0'); }
-
-        // PENTING: Preload halaman pertama dulu biar nggak blank
-        let pageNum = 1;
-        let attempt = 0;
-        const firstImg = new Image();
-        const firstSrc = base + pad(1) + '.' + formats[attempt];
-        firstImg.onload = function() {
-          pagesEl.appendChild(firstImg);
-          pageNum = 2;
-          attempt = 0;
-          loadBatch(2);
-        };
-        firstImg.onerror = function() {
-          attempt++;
-          if (attempt < formats.length) {
-            firstImg.src = base + pad(1) + '.' + formats[attempt];
-          } else {
-            pagesEl.innerHTML = '<div class="empty">Tidak ada gambar di folder ini.</div>';
-          }
-        };
-        firstImg.src = firstSrc;
-
-        // Load batch berikutnya dengan IntersectionObserver
-        function loadBatch(startPage) {
-          if (isLoading || startPage > maxPages) return;
-          isLoading = true;
-          let loaded = 0;
-
-          for (let i = startPage; i < startPage + batchSize; i++) {
-            let idx = 0;
-            const img = new Image();
-            const tryNext = () => {
-              if (idx >= formats.length) {
-                return; // stop kalau nggak ada format
+        // Scan maksimal 200 halaman
+        async function scanAll() {
+          const imageList = [];
+          for (let i = 1; i <= 200; i++) {
+            if (stopScan) break;
+            const src = await fastScanPage(base, i);
+            if (src) {
+              imageList.push(src);
+            } else {
+              // Kalau halaman 1 tidak ada, langsung stop
+              if (i === 1) {
+                stopScan = true;
               }
-              img.onload = () => {
-                pagesEl.appendChild(img);
-                loaded++;
-                if (loaded === batchSize) {
-                  isLoading = false;
-                }
-              };
-              img.onerror = () => {
-                idx++;
-                tryNext();
-              };
-              img.src = base + pad(i) + '.' + formats[idx];
-            };
-            tryNext();
+              // Kalau ada gap di tengah (misal 5 gagal, 6 ada), stop aja biar aman
+              break;
+            }
           }
-
-          // Auto-load berikutnya kalau user scroll dekat bawah
-          let scrollTimeout;
-          window.addEventListener('scroll', function() {
-            clearTimeout(scrollTimeout);
-            scrollTimeout = setTimeout(() => {
-              if (!isLoading && window.innerHeight + window.scrollY >= document.body.offsetHeight - 600) {
-                loadBatch(startPage + batchSize);
-              }
-            }, 200);
-          });
+          return imageList;
         }
 
-        // Simpan progress
-        try {
-          localStorage.setItem('gitmanhwa_progress_' + seriesId, JSON.stringify({
-            chapter: ch.folder,
-            scrollY: 0
-          }));
-        } catch(e) {}
+        scanAll().then(imageList => {
+          if (imageList.length === 0) {
+            pagesEl.innerHTML = '<div class="empty">Tidak ada gambar di folder ini.</div>';
+            return;
+          }
+
+          totalPagesFound = imageList.length;
+          indicator.textContent = '1 / ' + totalPagesFound;
+
+          // Render per 40 halaman
+          const batchSize = 40;
+          let currentBatch = 0;
+          pagesEl.innerHTML = '';
+
+          function renderBatch() {
+            const start = currentBatch * batchSize;
+            const end = Math.min(start + batchSize, imageList.length);
+            
+            for (let i = start; i < end; i++) {
+              const img = document.createElement('img');
+              img.src = imageList[i];
+              img.loading = 'eager';
+              img.decoding = 'async';
+              img.alt = 'Page ' + (i + 1);
+              img.style.display = 'block';
+              img.style.width = '100%';
+              img.style.height = 'auto';
+              pagesEl.appendChild(img);
+            }
+
+            currentBatch++;
+
+            // Kalau masih ada batch berikutnya, render lagi setelah sedikit delay (biar UI nggak freeze)
+            if (currentBatch * batchSize < imageList.length) {
+              setTimeout(renderBatch, 50);
+            } else {
+              // Semua sudah dirender, update total
+              indicator.textContent = '1 / ' + totalPagesFound;
+              // Scroll ke posisi tersimpan
+              try {
+                const saved = localStorage.getItem('gitmanhwa_progress_' + seriesId);
+                if (saved) {
+                  const data = JSON.parse(saved);
+                  if (data.scrollY) window.scrollTo(0, data.scrollY);
+                }
+              } catch(e) {}
+            }
+          }
+
+          renderBatch();
+
+          // Simpan progress
+          try {
+            localStorage.setItem('gitmanhwa_progress_' + seriesId, JSON.stringify({
+              chapter: ch.folder,
+              scrollY: 0
+            }));
+          } catch(e) {}
+        });
       }
 
+      // ===== UPDATE INDICATOR SAAT SCROLL =====
+      let scrollTimer;
+      window.addEventListener('scroll', function() {
+        clearTimeout(scrollTimer);
+        scrollTimer = setTimeout(() => {
+          const imgs = pagesEl.querySelectorAll('img');
+          const currentY = window.scrollY;
+          let activeIndex = 1;
+          for (let i = 0; i < imgs.length; i++) {
+            const imgTop = imgs[i].offsetTop;
+            const imgBottom = imgTop + imgs[i].offsetHeight;
+            if (currentY >= imgTop - 100 && currentY < imgBottom - 100) {
+              activeIndex = i + 1;
+              break;
+            }
+          }
+          if (totalPagesFound > 0) {
+            indicator.textContent = activeIndex + ' / ' + totalPagesFound;
+          }
+
+          // Simpan scroll progress
+          try {
+            const progress = {
+              chapter: chapters[currentIndex]?.folder || '',
+              scrollY: currentY
+            };
+            localStorage.setItem('gitmanhwa_progress_' + seriesId, JSON.stringify(progress));
+          } catch(e) {}
+        }, 200);
+      });
+
+      // ===== NAVIGASI CHAPTER =====
       function updateNav() {
         indicator.textContent = (currentIndex + 1) + ' / ' + chapters.length;
         prevBtn.disabled = currentIndex === chapters.length - 1;
@@ -197,7 +263,8 @@
           currentIndex++;
           const ch = chapters[currentIndex];
           history.pushState(null, '', 'reader.html?series=' + seriesId + '&chapter=' + ch.folder);
-          resetAndLoadChapter(currentIndex);
+          loadChapter(currentIndex);
+          updateNav();
           window.scrollTo(0, 0);
         }
       });
@@ -207,7 +274,8 @@
           currentIndex--;
           const ch = chapters[currentIndex];
           history.pushState(null, '', 'reader.html?series=' + seriesId + '&chapter=' + ch.folder);
-          resetAndLoadChapter(currentIndex);
+          loadChapter(currentIndex);
+          updateNav();
           window.scrollTo(0, 0);
         }
       });
@@ -217,6 +285,8 @@
         if (e.key === 'ArrowLeft') newPrev.click();
         if (e.key === 'ArrowRight') newNext.click();
       });
+
+      updateNav();
     })();
   </script>
 </body>
