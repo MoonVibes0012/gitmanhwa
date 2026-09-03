@@ -29,6 +29,11 @@
 
   <script>
     (function() {
+      // Blokir copy
+      document.addEventListener('copy', (e) => e.preventDefault());
+      document.addEventListener('cut', (e) => e.preventDefault());
+      document.addEventListener('contextmenu', (e) => e.preventDefault());
+
       const params = new URLSearchParams(location.search);
       const id = params.get('id');
       const container = document.getElementById('seriesDetail');
