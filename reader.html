@@ -31,6 +31,11 @@
 
   <script>
     (function() {
+      // Blokir copy
+      document.addEventListener('copy', (e) => e.preventDefault());
+      document.addEventListener('cut', (e) => e.preventDefault());
+      document.addEventListener('contextmenu', (e) => e.preventDefault());
+
       const params = new URLSearchParams(location.search);
       const seriesId = params.get('series');
       const chapterFolder = params.get('chapter');
@@ -94,73 +99,51 @@
         });
 
       function loadChapter(index) {
-        // BATALIN LOAD SEBELUMNYA
-        loadCancel = true;
-        setTimeout(() => { loadCancel = false; }, 100);
-
         const ch = chapters[index];
         if (!ch) return;
 
-        // RESET PAGES
+        // Reset
         pagesEl.innerHTML = '';
         const base = 'series/' + seriesId + '/' + ch.folder + '/';
         let pageNum = 1;
-        const maxTry = 80;
-        const formats = ['jpg', 'png', 'webp', 'bmp'];
-        let formatIndex = 0;
-        let isActive = true;
+        const maxPages = 80;
+        const formats = ['jpg', 'png', 'webp', 'jpeg', 'bmp'];
 
-        function pad(n) { return n.toString().padStart(2, '0'); }
+        function pad(n) { return String(n).padStart(2, '0'); }
 
         function tryLoad() {
-          if (!isActive || loadCancel || pageNum > maxTry) return;
-          const img = new Image();
-          const src = base + pad(pageNum) + '.' + formats[formatIndex];
-          img.src = src;
-          img.onload = function() {
-            if (!isActive || loadCancel) return;
-            pagesEl.appendChild(img);
-            pageNum++;
-            formatIndex = 0;
-            tryLoad();
-          };
-          img.onerror = function() {
-            if (!isActive || loadCancel) return;
-            formatIndex++;
-            if (formatIndex < formats.length) {
-              tryLoad();
-            } else {
-              formatIndex = 0;
+          if (pageNum > maxPages) {
+            if (pagesEl.children.length === 0) {
+              pagesEl.innerHTML = `<div class="empty">Tidak ada gambar di folder ini.</div>`;
+            }
+            return;
+          }
+
+          let attempt = 0;
+          function attemptLoad() {
+            if (attempt >= formats.length) {
               pageNum++;
               tryLoad();
+              return;
             }
-          };
+
+            const img = new Image();
+            const src = base + pad(pageNum) + '.' + formats[attempt];
+            img.onload = function() {
+              pagesEl.appendChild(img);
+              pageNum++;
+              tryLoad();
+            };
+            img.onerror = function() {
+              attempt++;
+              attemptLoad();
+            };
+            img.src = src;
+          }
+          attemptLoad();
         }
 
-        let firstTry = 0;
-        function firstLoad() {
-          if (!isActive || loadCancel) return;
-          const img = new Image();
-          const src = base + pad(1) + '.' + formats[firstTry % formats.length];
-          img.src = src;
-          img.onload = function() {
-            if (!isActive || loadCancel) return;
-            pagesEl.appendChild(img);
-            pageNum = 2;
-            formatIndex = 0;
-            tryLoad();
-          };
-          img.onerror = function() {
-            if (!isActive || loadCancel) return;
-            firstTry++;
-            if (firstTry < 10) {
-              firstLoad();
-            } else {
-              pagesEl.innerHTML = `<div class="empty">Tidak ada gambar di folder ${base}</div>`;
-            }
-          };
-        }
-        firstLoad();
+        tryLoad();
 
         // Simpan progress
         try {
@@ -169,11 +152,6 @@
             scrollY: 0
           }));
         } catch(e) {}
-
-        // Cleanup
-        return function() {
-          isActive = false;
-        };
       }
 
       function updateNav() {
@@ -244,4 +222,3 @@
   </script>
 </body>
 </html>
-
