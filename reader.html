@@ -12,9 +12,7 @@
   <div class="reader-header">
     <a href="#" id="backBtn">←</a>
     <div class="reader-title" id="readerTitle">Loading...</div>
-    <select id="chapterSelect" class="chapter-select">
-      <!-- diisi JS -->
-    </select>
+    <select id="chapterSelect" class="chapter-select"></select>
   </div>
 
   <!-- ===== PAGES ===== -->
@@ -50,8 +48,6 @@
 
       let chapters = [];
       let currentIndex = -1;
-      let totalPages = 0;
-      let loadedPages = 0;
       let isLoading = false;
 
       backBtn.addEventListener('click', function(e) {
@@ -98,8 +94,6 @@
 
       function resetAndLoadChapter(index) {
         pagesEl.innerHTML = '';
-        totalPages = 0;
-        loadedPages = 0;
         isLoading = false;
         loadChapter(index);
         updateNav();
@@ -109,70 +103,73 @@
         const ch = chapters[index];
         if (!ch) return;
         const base = 'series/' + seriesId + '/' + ch.folder + '/';
-        const formats = ['jpg', 'png', 'webp', 'jpeg', 'bmp'];
+        const formats = ['webp', 'jpg', 'png', 'jpeg', 'bmp'];
         const batchSize = 10;
+        const maxPages = 150;
 
         function pad(n) { return String(n).padStart(2, '0'); }
 
-        function probePage(pageNum) {
-          return new Promise((resolve) => {
-            if (pageNum > 200) return resolve(null); // batas maksimal 200 halaman
-            let attempt = 0;
-            const img = new Image();
-            const tryNext = () => {
-              if (attempt >= formats.length) {
-                return resolve(null); // tidak ada format yang cocok
-              }
-              const src = base + pad(pageNum) + '.' + formats[attempt];
-              img.onload = () => resolve(src);
-              img.onerror = () => { attempt++; tryNext(); };
-              img.src = src;
-            };
-            tryNext();
-          });
-        }
-
-        async function loadBatch(startPage) {
-          isLoading = true;
-          let loadedInBatch = 0;
-          for (let i = startPage; i < startPage + batchSize; i++) {
-            const src = await probePage(i);
-            if (src) {
-              const img = document.createElement('img');
-              img.src = src;
-              img.loading = 'lazy';
-              img.decoding = 'async';
-              pagesEl.appendChild(img);
-              loadedInBatch++;
-              totalPages = Math.max(totalPages, i);
-            } else {
-              break; // jika tidak ada lagi, stop
-            }
-          }
-          loadedPages = totalPages;
-          isLoading = false;
-
-          if (loadedInBatch === 0 && startPage === 1) {
+        // PENTING: Preload halaman pertama dulu biar nggak blank
+        let pageNum = 1;
+        let attempt = 0;
+        const firstImg = new Image();
+        const firstSrc = base + pad(1) + '.' + formats[attempt];
+        firstImg.onload = function() {
+          pagesEl.appendChild(firstImg);
+          pageNum = 2;
+          attempt = 0;
+          loadBatch(2);
+        };
+        firstImg.onerror = function() {
+          attempt++;
+          if (attempt < formats.length) {
+            firstImg.src = base + pad(1) + '.' + formats[attempt];
+          } else {
             pagesEl.innerHTML = '<div class="empty">Tidak ada gambar di folder ini.</div>';
           }
-        }
+        };
+        firstImg.src = firstSrc;
 
-        // Load batch pertama (1-10)
-        loadBatch(1);
+        // Load batch berikutnya dengan IntersectionObserver
+        function loadBatch(startPage) {
+          if (isLoading || startPage > maxPages) return;
+          isLoading = true;
+          let loaded = 0;
 
-        // Scroll listener untuk load batch berikutnya
-        let scrollTimeout;
-        window.addEventListener('scroll', function() {
-          clearTimeout(scrollTimeout);
-          scrollTimeout = setTimeout(() => {
-            if (isLoading) return;
-            if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 800) {
-              if (loadedPages < 200) {
-                loadBatch(loadedPages + 1);
+          for (let i = startPage; i < startPage + batchSize; i++) {
+            let idx = 0;
+            const img = new Image();
+            const tryNext = () => {
+              if (idx >= formats.length) {
+                return; // stop kalau nggak ada format
               }
-            }
-          }, 200);
-        });
+              img.onload = () => {
+                pagesEl.appendChild(img);
+                loaded++;
+                if (loaded === batchSize) {
+                  isLoading = false;
+                }
+              };
+              img.onerror = () => {
+                idx++;
+                tryNext();
+              };
+              img.src = base + pad(i) + '.' + formats[idx];
+            };
+            tryNext();
+          }
+
+          // Auto-load berikutnya kalau user scroll dekat bawah
+          let scrollTimeout;
+          window.addEventListener('scroll', function() {
+            clearTimeout(scrollTimeout);
+            scrollTimeout = setTimeout(() => {
+              if (!isLoading && window.innerHeight + window.scrollY >= document.body.offsetHeight - 600) {
+                loadBatch(startPage + batchSize);
+              }
+            }, 200);
+          });
+        }
 
         // Simpan progress
         try {
@@ -215,7 +212,7 @@
         }
       });
 
-      // Keyboard
+      // Keyboard shortcut
       document.addEventListener('keydown', function(e) {
         if (e.key === 'ArrowLeft') newPrev.click();
         if (e.key === 'ArrowRight') newNext.click();
