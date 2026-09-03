@@ -161,7 +161,7 @@ function updateSeriesCount() {
   el.textContent = visible + ' series';
 }
 
-// ===== UPDATES =====
+// ===== UPDATES (FIXED) =====
 function renderUpdates() {
   const list = document.getElementById('updateList');
   if (!list) return;
@@ -194,7 +194,7 @@ function renderUpdates() {
       : `<div class="cover-placeholder" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#2a2a3e,#1a1a2e);color:#555;font-size:20px;font-weight:bold;">${s.title.charAt(0)}</div>`;
 
     return `
-      <div class="update-item">
+      <div class="update-item" data-href="series.html?id=${s.id}">
         <div class="update-cover">
           ${coverImg}
         </div>
@@ -209,6 +209,20 @@ function renderUpdates() {
       </div>
     `;
   }).join('');
+
+  // EVENT: klik kartu (di luar chapter-row) → pindah ke series detail
+  list.querySelectorAll('.update-item').forEach(item => {
+    item.addEventListener('click', function(e) {
+      // Kalau yang diklik adalah link chapter, biarkan default (ke reader)
+      if (e.target.closest('.chapter-row')) {
+        return;
+      }
+      const href = this.dataset.href;
+      if (href) {
+        window.location.href = href;
+      }
+    });
+  });
 }
 
 // ===== NAV ACTIVE (BOTTOM NAV) =====
