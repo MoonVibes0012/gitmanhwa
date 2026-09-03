@@ -17,16 +17,20 @@ fetch('data/series.json')
   })
   .catch(err => {
     console.error('❌ Error:', err);
-    document.getElementById('seriesGrid').innerHTML = `<div class="empty">❌ Gagal load data: ${err.message}</div>`;
-    document.getElementById('updateList').innerHTML = `<div class="empty">❌ Gagal load data: ${err.message}</div>`;
+    const grid = document.getElementById('seriesGrid');
+    const updates = document.getElementById('updateList');
+    if (grid) grid.innerHTML = `<div class="empty">❌ Gagal load data: ${err.message}</div>`;
+    if (updates) updates.innerHTML = `<div class="empty">❌ Gagal load data: ${err.message}</div>`;
   });
 
 // ===== RENDER ALL =====
 function renderAll() {
-  renderSlider();
   const params = new URLSearchParams(location.search);
-  const tab = params.get('tab') || 'all';
+  const tab = params.get('tab') || 'home';
   const genre = document.querySelector('.genre-btn.active')?.dataset.genre || 'all';
+
+  renderSlider();
+  renderAnnouncement();
   renderSeriesGrid(tab, genre);
   renderUpdates();
   updateSeriesCount();
@@ -94,18 +98,33 @@ function goToSlide(index) {
   currentSlide = index;
 }
 
+// ===== PENGUMUMAN =====
+function renderAnnouncement() {
+  const section = document.querySelector('.announcement-section');
+  if (!section) return;
+  // Static content sudah ada di HTML, ini hanya placeholder untuk event
+  const card = document.querySelector('.announcement-card');
+  if (card) {
+    card.addEventListener('click', () => {
+      alert('Premium Sekarang Cuma 12500!!!');
+    });
+  }
+}
+
 // ===== SERIES GRID =====
-function renderSeriesGrid(tab = 'all', genre = 'all') {
+function renderSeriesGrid(tab = 'home', genre = 'all') {
   const grid = document.getElementById('seriesGrid');
   if (!grid) return;
 
   let filtered = [...SERIES];
 
   // TAB FILTER
-  if (tab === 'populer') {
+  if (tab === 'populer' || tab === 'explore') {
     filtered = filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0));
-  } else if (tab === 'selesai') {
+  } else if (tab === 'selesai' || tab === 'library') {
     filtered = filtered.filter(s => s.status === 'Completed' || s.status === 'Selesai');
+  } else if (tab === 'all') {
+    // semua series
   }
 
   // GENRE FILTER
@@ -123,7 +142,7 @@ function renderSeriesGrid(tab = 'all', genre = 'all') {
   grid.innerHTML = filtered.map(s => `
     <a href="series.html?id=${s.id}" class="series-card">
       <div class="series-cover">
-        <img src="${s.cover || ''}" alt="${s.title}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+        <img src="${s.cover || ''}" alt="${s.title}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
         <div class="cover-fallback" style="display:none">${s.title.charAt(0)}</div>
         <span class="flag">${s.flag || ''}</span>
       </div>
@@ -175,10 +194,14 @@ function renderUpdates() {
 
     const genreTags = s.genre ? s.genre.slice(0, 2).map(g => `<span class="genre-tag">${g}</span>`).join('') : '';
 
+    const coverImg = s.cover 
+      ? `<img src="${s.cover}" onerror="this.style.display='none'">` 
+      : `<div class="cover-placeholder" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#2a2a3e,#1a1a2e);color:#555;font-size:20px;font-weight:bold;">${s.title.charAt(0)}</div>`;
+
     return `
       <div class="update-item">
         <div class="update-cover">
-          <img src="${s.cover || ''}" onerror="this.style.display='none'">
+          ${coverImg}
         </div>
         <div class="update-info">
           <div class="update-title">
@@ -193,22 +216,22 @@ function renderUpdates() {
   }).join('');
 }
 
-// ===== NAV ACTIVE =====
+// ===== NAV ACTIVE (BOTTOM NAV) =====
 function updateNavActive() {
   const params = new URLSearchParams(location.search);
-  const tab = params.get('tab') || 'all';
+  const tab = params.get('tab') || 'home';
   
-  document.querySelectorAll('.nav-menu a').forEach(a => {
-    a.classList.remove('active');
-    const href = a.getAttribute('href');
-    if (href === 'index.html' && !tab) {
-      a.classList.add('active');
-    } else if (href === 'index.html?tab=all' && tab === 'all') {
-      a.classList.add('active');
-    } else if (href === 'index.html?tab=populer' && tab === 'populer') {
-      a.classList.add('active');
-    } else if (href === 'index.html?tab=selesai' && tab === 'selesai') {
-      a.classList.add('active');
+  document.querySelectorAll('.bottom-nav .nav-item').forEach(item => {
+    item.classList.remove('active');
+    const page = item.dataset.page;
+    if (page === 'home' && tab === 'home') {
+      item.classList.add('active');
+    } else if (page === 'explore' && tab === 'explore') {
+      item.classList.add('active');
+    } else if (page === 'library' && tab === 'library') {
+      item.classList.add('active');
+    } else if (page === 'all' && tab === 'all') {
+      item.classList.add('active');
     }
   });
 }
@@ -220,7 +243,7 @@ document.querySelectorAll('.genre-btn').forEach(btn => {
     this.classList.add('active');
     const genre = this.dataset.genre;
     const params = new URLSearchParams(location.search);
-    const tab = params.get('tab') || 'all';
+    const tab = params.get('tab') || 'home';
     renderSeriesGrid(tab, genre);
   });
 });
@@ -232,31 +255,44 @@ const searchInput = document.getElementById('searchInput');
 const searchResult = document.getElementById('searchResult');
 const closeSearch = document.getElementById('closeSearch');
 
-searchBtn?.addEventListener('click', () => {
-  searchModal.classList.add('show');
-  searchInput.focus();
-  searchResult.innerHTML = '';
-  searchInput.value = '';
-});
+if (searchBtn) {
+  searchBtn.addEventListener('click', () => {
+    searchModal.classList.add('show');
+    searchInput.focus();
+    searchResult.innerHTML = '';
+    searchInput.value = '';
+  });
+}
 
-closeSearch?.addEventListener('click', () => searchModal.classList.remove('show'));
-searchModal?.addEventListener('click', (e) => {
-  if (e.target === searchModal) searchModal.classList.remove('show');
-});
+if (closeSearch) {
+  closeSearch.addEventListener('click', () => searchModal.classList.remove('show'));
+}
 
-searchInput?.addEventListener('input', function() {
-  const q = this.value.toLowerCase().trim();
-  if (!q) { searchResult.innerHTML = ''; return; }
-  const filtered = SERIES.filter(s => s.title.toLowerCase().includes(q));
-  if (filtered.length === 0) {
-    searchResult.innerHTML = `<div class="search-item" style="color:#666">Tidak ditemukan</div>`;
-    return;
-  }
-  searchResult.innerHTML = filtered.map(s =>
-    `<a href="series.html?id=${s.id}" class="search-item">${s.title} ⭐${s.rating || '?'} · ${s.type || 'Manhwa'}</a>`
-  ).join('');
-});
+if (searchModal) {
+  searchModal.addEventListener('click', (e) => {
+    if (e.target === searchModal) searchModal.classList.remove('show');
+  });
+}
+
+if (searchInput) {
+  searchInput.addEventListener('input', function() {
+    const q = this.value.toLowerCase().trim();
+    if (!q) { searchResult.innerHTML = ''; return; }
+    const filtered = SERIES.filter(s => s.title.toLowerCase().includes(q));
+    if (filtered.length === 0) {
+      searchResult.innerHTML = `<div class="search-item" style="color:#666">Tidak ditemukan</div>`;
+      return;
+    }
+    searchResult.innerHTML = filtered.map(s =>
+      `<a href="series.html?id=${s.id}" class="search-item">${s.title} ⭐${s.rating || '?'} · ${s.type || 'Manhwa'}</a>`
+    ).join('');
+  });
+}
+
+// ===== BLOCKIR COPY =====
+document.addEventListener('copy', (e) => e.preventDefault());
+document.addEventListener('cut', (e) => e.preventDefault());
+document.addEventListener('contextmenu', (e) => e.preventDefault());
 
 // ===== INIT =====
-// Jalankan updateNavActive setelah render
 setTimeout(updateNavActive, 100);
