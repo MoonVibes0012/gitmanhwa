@@ -17,24 +17,38 @@ fetch('data/series.json')
   })
   .catch(err => {
     console.error('❌ Error:', err);
-    const grid = document.getElementById('seriesGrid');
-    const updates = document.getElementById('updateList');
-    if (grid) grid.innerHTML = `<div class="empty">❌ Gagal load data: ${err.message}</div>`;
-    if (updates) updates.innerHTML = `<div class="empty">❌ Gagal load data: ${err.message}</div>`;
   });
 
 // ===== RENDER ALL =====
 function renderAll() {
   const params = new URLSearchParams(location.search);
   const tab = params.get('tab') || 'home';
-  const genre = document.querySelector('.genre-btn.active')?.dataset.genre || 'all';
 
+  const defaultContent = document.getElementById('defaultContent');
+  const exploreContent = document.getElementById('exploreContent');
+
+  if (tab === 'explore') {
+    // Tampilkan Explore, sembunyikan Home
+    defaultContent.style.display = 'none';
+    exploreContent.style.display = 'block';
+    renderExplorePage();
+  } else {
+    // Tampilkan Home, sembunyikan Explore
+    defaultContent.style.display = 'block';
+    exploreContent.style.display = 'none';
+    renderHomePage(tab);
+  }
+
+  updateNavActive();
+}
+
+function renderHomePage(tab) {
+  const genre = document.querySelector('.genre-btn.active')?.dataset.genre || 'all';
   renderSlider();
   renderAnnouncement();
-  renderSeriesGrid(tab, genre);
+  renderSeriesGrid(tab, genre, document.getElementById('seriesGrid'));
   renderUpdates();
   updateSeriesCount();
-  updateNavActive();
 }
 
 // ===== SLIDER =====
@@ -89,16 +103,14 @@ function goToSlide(index) {
   const slides = document.querySelectorAll('.slide');
   const dots = document.querySelectorAll('.dot');
   if (!slides.length) return;
-
   slides.forEach(s => s.classList.remove('active'));
   dots.forEach(d => d.classList.remove('active'));
-
   slides[index].classList.add('active');
   dots[index].classList.add('active');
   currentSlide = index;
 }
 
-// ===== PENGUMUMAN =====
+// ===== ANNOUNCEMENT =====
 function renderAnnouncement() {
   const card = document.querySelector('.announcement-card');
   if (card) {
@@ -109,8 +121,8 @@ function renderAnnouncement() {
 }
 
 // ===== SERIES GRID =====
-function renderSeriesGrid(tab = 'home', genre = 'all') {
-  const grid = document.getElementById('seriesGrid');
+function renderSeriesGrid(tab = 'home', genre = 'all', targetGrid) {
+  const grid = targetGrid || document.getElementById('seriesGrid');
   if (!grid) return;
 
   let filtered = [...SERIES];
@@ -150,8 +162,6 @@ function renderSeriesGrid(tab = 'home', genre = 'all') {
       </div>
     </a>
   `).join('');
-
-  updateSeriesCount();
 }
 
 function updateSeriesCount() {
@@ -161,7 +171,7 @@ function updateSeriesCount() {
   el.textContent = visible + ' series';
 }
 
-// ===== UPDATES (FIXED) =====
+// ===== UPDATES =====
 function renderUpdates() {
   const list = document.getElementById('updateList');
   if (!list) return;
@@ -210,22 +220,99 @@ function renderUpdates() {
     `;
   }).join('');
 
-  // EVENT: klik kartu (di luar chapter-row) → pindah ke series detail
   list.querySelectorAll('.update-item').forEach(item => {
     item.addEventListener('click', function(e) {
-      // Kalau yang diklik adalah link chapter, biarkan default (ke reader)
-      if (e.target.closest('.chapter-row')) {
-        return;
-      }
+      if (e.target.closest('.chapter-row')) return;
       const href = this.dataset.href;
-      if (href) {
-        window.location.href = href;
-      }
+      if (href) window.location.href = href;
     });
   });
 }
 
-// ===== NAV ACTIVE (BOTTOM NAV) =====
+// ===== RENDER EXPLORE PAGE (BARU) =====
+function renderExplorePage() {
+  const heroBanner = document.getElementById('heroBanner');
+  const horizontalScroll = document.getElementById('horizontalScroll');
+  const exploreGrid = document.getElementById('exploreGrid');
+  const tabBanner = document.getElementById('tabBanner');
+
+  if (!heroBanner || !horizontalScroll || !exploreGrid) return;
+
+  // Urutkan berdasarkan rating untuk Hero
+  const sorted = [...SERIES].sort((a,b) => (b.rating || 0) - (a.rating || 0));
+  const hero = sorted[0];
+
+  // 1. Hero Banner
+  if (hero) {
+    heroBanner.innerHTML = `
+      <a href="series.html?id=${hero.id}" style="text-decoration:none;color:inherit;">
+        <img src="${hero.cover || ''}" onerror="this.style.display='none'">
+        <div class="hero-banner-content">
+          <h2>${hero.title}</h2>
+          <p>${hero.synopsis || ''}</p>
+          <div class="tags">
+            ${(hero.genre || []).slice(0,2).map(g => `<span class="tag">${g}</span>`).join('')}
+          </div>
+        </div>
+      </a>
+    `;
+  }
+
+  // 2. Horizontal Scroll (Menggunakan badge waktu statis simulasi)
+  const badges = ['3d', '4d', '4mo', '2d', '5mo', '3d', '3mo', '6d', '1yr', '2d'];
+  horizontalScroll.innerHTML = sorted.slice(0, 10).map((s, i) => `
+    <a href="series.html?id=${s.id}" class="horizontal-card">
+      <img src="${s.cover || ''}" loading="lazy" onerror="this.style.display='none'">
+      <span class="time-badge">🕓 ${badges[i] || '3d'}</span>
+      <span class="flag-badge">${s.flag || '🇰🇷'}</span>
+    </a>
+  `).join('');
+
+  // 3. Grid Utama Explore
+  renderSeriesGrid('all', 'all', exploreGrid);
+
+  // 4. Lanjut Baca (Cek localStorage progress)
+  const continueEmpty = document.getElementById('continueEmpty');
+  let hasHistory = false;
+  SERIES.forEach(s => {
+    if (localStorage.getItem('gitmanhwa_progress_' + s.id)) hasHistory = true;
+  });
+
+  if (hasHistory) {
+    continueEmpty.innerHTML = "Ada riwayat baca!";
+  } else {
+    continueEmpty.innerHTML = "Belum ada Data<br><br>Kamu belum punya riwayat baca";
+  }
+
+  // 5. Tab Rekomendasi / Pilihan Admin (Ubah Banner di bawah)
+  const tabs = document.querySelectorAll('.explore-tab');
+  tabs.forEach(tab => {
+    tab.addEventListener('click', function() {
+      tabs.forEach(t => t.classList.remove('active'));
+      this.classList.add('active');
+      const type = this.dataset.tab;
+      const pilihan = type === 'rekomendasi' ? sorted[0] : (sorted[1] || sorted[0]);
+      tabBanner.innerHTML = `
+        <a href="series.html?id=${pilihan.id}" style="text-decoration:none;color:inherit;">
+          <img src="${pilihan.cover || ''}" onerror="this.style.display='none'">
+          <div class="hero-banner-content">
+            <h2>${pilihan.title}</h2>
+            <p>${pilihan.synopsis || ''}</p>
+            <div class="tags">
+              <span class="tag new">New</span>
+              <span class="tag popular">Popular</span>
+            </div>
+          </div>
+        </a>
+      `;
+    });
+  });
+
+  // Trigger klik pertama
+  tabs[0].click();
+}
+
+// ===== NAV ACTIVE =====
 function updateNavActive() {
   const params = new URLSearchParams(location.search);
   const tab = params.get('tab') || 'home';
@@ -233,15 +320,10 @@ function updateNavActive() {
   document.querySelectorAll('.bottom-nav .nav-item').forEach(item => {
     item.classList.remove('active');
     const page = item.dataset.page;
-    if (page === 'home' && tab === 'home') {
-      item.classList.add('active');
-    } else if (page === 'explore' && tab === 'explore') {
-      item.classList.add('active');
-    } else if (page === 'library' && tab === 'library') {
-      item.classList.add('active');
-    } else if (page === 'all' && tab === 'all') {
-      item.classList.add('active');
-    }
+    if (page === 'home' && tab === 'home') item.classList.add('active');
+    else if (page === 'explore' && tab === 'explore') item.classList.add('active');
+    else if (page === 'library' && tab === 'library') item.classList.add('active');
+    else if (page === 'all' && tab === 'all') item.classList.add('active');
   });
 }
 
@@ -253,7 +335,7 @@ document.querySelectorAll('.genre-btn').forEach(btn => {
     const genre = this.dataset.genre;
     const params = new URLSearchParams(location.search);
     const tab = params.get('tab') || 'home';
-    renderSeriesGrid(tab, genre);
+    renderSeriesGrid(tab, genre, document.getElementById('seriesGrid'));
   });
 });
 
@@ -273,25 +355,15 @@ if (searchBtn) {
   });
 }
 
-if (closeSearch) {
-  closeSearch.addEventListener('click', () => searchModal.classList.remove('show'));
-}
-
-if (searchModal) {
-  searchModal.addEventListener('click', (e) => {
-    if (e.target === searchModal) searchModal.classList.remove('show');
-  });
-}
+if (closeSearch) closeSearch.addEventListener('click', () => searchModal.classList.remove('show'));
+if (searchModal) searchModal.addEventListener('click', (e) => { if (e.target === searchModal) searchModal.classList.remove('show'); });
 
 if (searchInput) {
   searchInput.addEventListener('input', function() {
     const q = this.value.toLowerCase().trim();
     if (!q) { searchResult.innerHTML = ''; return; }
     const filtered = SERIES.filter(s => s.title.toLowerCase().includes(q));
-    if (filtered.length === 0) {
-      searchResult.innerHTML = `<div class="search-item" style="color:#666">Tidak ditemukan</div>`;
-      return;
-    }
+    if (filtered.length === 0) { searchResult.innerHTML = `<div class="search-item" style="color:#666">Tidak ditemukan</div>`; return; }
     searchResult.innerHTML = filtered.map(s =>
       `<a href="series.html?id=${s.id}" class="search-item">${s.title} ⭐${s.rating || '?'} · ${s.type || 'Manhwa'}</a>`
     ).join('');
