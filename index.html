@@ -31,59 +31,95 @@
     </div>
   </div>
 
-  <!-- ===== FEATURED SLIDER ===== -->
-  <section class="featured-section">
-    <div class="slider-container" id="sliderContainer">
-      <!-- diisi JS -->
-    </div>
-    <div class="slider-dots" id="sliderDots"></div>
-  </section>
+  <!-- ===== KONTEN HOME (default) ===== -->
+  <div id="defaultContent" class="default-section">
+    <!-- Slider -->
+    <section class="featured-section">
+      <div class="slider-container" id="sliderContainer"></div>
+      <div class="slider-dots" id="sliderDots"></div>
+    </section>
 
-  <!-- ===== GENRE FILTER ===== -->
-  <section class="section">
-    <div class="genre-filter" id="genreFilter">
-      <button class="genre-btn active" data-genre="all">Semua</button>
-      <button class="genre-btn" data-genre="action">Action</button>
-      <button class="genre-btn" data-genre="romance">Romance</button>
-      <button class="genre-btn" data-genre="fantasy">Fantasy</button>
-      <button class="genre-btn" data-genre="horror">Horror</button>
-      <button class="genre-btn" data-genre="comedy">Comedy</button>
-      <button class="genre-btn" data-genre="drama">Drama</button>
-    </div>
-  </section>
+    <!-- Genre -->
+    <section class="section">
+      <div class="genre-filter" id="genreFilter">
+        <button class="genre-btn active" data-genre="all">Semua</button>
+        <button class="genre-btn" data-genre="action">Action</button>
+        <button class="genre-btn" data-genre="romance">Romance</button>
+        <button class="genre-btn" data-genre="fantasy">Fantasy</button>
+        <button class="genre-btn" data-genre="horror">Horror</button>
+        <button class="genre-btn" data-genre="comedy">Comedy</button>
+        <button class="genre-btn" data-genre="drama">Drama</button>
+      </div>
+    </section>
 
-  <!-- ===== PENGUMUMAN ===== -->
-  <section class="section announcement-section">
-    <div class="section-header">
-      <h3 class="section-title">Pengumuman</h3>
-      <span class="see-all">Semua</span>
-    </div>
-    <div class="announcement-card">
-      <div class="announcement-cover">🦈</div>
-      <div class="announcement-text">Premium Sekarang Cuma 12500!!!</div>
-    </div>
-  </section>
+    <!-- Pengumuman -->
+    <section class="section announcement-section">
+      <div class="section-header">
+        <h3 class="section-title">Pengumuman</h3>
+        <span class="see-all">Semua</span>
+      </div>
+      <div class="announcement-card">
+        <div class="announcement-cover">🦈</div>
+        <div class="announcement-text">Premium Sekarang Cuma 12500!!!</div>
+      </div>
+    </section>
 
-  <!-- ===== SERIES GRID ===== -->
-  <section class="section">
-    <div class="section-header">
-      <h3 class="section-title">Rekomendasi</h3>
-      <span class="section-count" id="seriesCount">0 series</span>
-    </div>
-    <div class="series-grid" id="seriesGrid">
-      <div class="empty">Loading data...</div>
-    </div>
-  </section>
+    <!-- Grid Rekomendasi -->
+    <section class="section">
+      <div class="section-header">
+        <h3 class="section-title">Rekomendasi</h3>
+        <span class="section-count" id="seriesCount">0 series</span>
+      </div>
+      <div class="series-grid" id="seriesGrid">
+        <div class="empty">Loading data...</div>
+      </div>
+    </section>
 
-  <!-- ===== UPDATE LIST ===== -->
-  <section class="section">
-    <div class="section-header">
-      <h3 class="section-title">Update Terbaru</h3>
-    </div>
-    <div class="update-list" id="updateList">
-      <div class="empty">Loading update...</div>
-    </div>
-  </section>
+    <!-- Update Terbaru -->
+    <section class="section">
+      <div class="section-header">
+        <h3 class="section-title">Update Terbaru</h3>
+      </div>
+      <div class="update-list" id="updateList">
+        <div class="empty">Loading update...</div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ===== KONTEN EXPLORE (Baru) ===== -->
+  <div id="exploreContent" style="display:none;">
+    <!-- Bagian 1: Hero Banner + Horizontal Scroll -->
+    <section class="explore-section">
+      <div class="hero-banner" id="heroBanner"></div>
+      <div class="horizontal-scroll" id="horizontalScroll"></div>
+    </section>
+
+    <!-- Bagian 2: Grid Utama -->
+    <section class="section">
+      <div class="section-header">
+        <h3 class="section-title">Semua Series</h3>
+      </div>
+      <div class="series-grid" id="exploreGrid"></div>
+    </section>
+
+    <!-- Bagian 3: Lanjut Baca + Tabs -->
+    <section class="section continue-section">
+      <div class="section-header">
+        <h3 class="section-title">Lanjut Baca</h3>
+      </div>
+      <div class="continue-empty" id="continueEmpty">
+        Belum ada Data<br><br>Kamu belum punya riwayat baca
+      </div>
+
+      <div class="explore-tabs">
+        <button class="explore-tab active" data-tab="rekomendasi">Rekomendasi</button>
+        <button class="explore-tab" data-tab="pilihan">Pilihan Admin</button>
+      </div>
+
+      <!-- Banner berubah sesuai tab -->
+      <div class="hero-banner" id="tabBanner"></div>
+    </section>
+  </div>
 
   <!-- ===== FOOTER ===== -->
   <footer>
@@ -92,7 +128,7 @@
 
   <!-- ===== BOTTOM NAVIGATION ===== -->
   <nav class="bottom-nav">
-    <a href="index.html" class="nav-item active" data-page="home">
+    <a href="index.html" class="nav-item" data-page="home">
       <span class="nav-icon">🏠</span>
       <span class="nav-label">Home</span>
     </a>
