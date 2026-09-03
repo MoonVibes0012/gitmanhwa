@@ -48,10 +48,11 @@
       const backBtn = document.getElementById('backBtn');
       const chapterSelect = document.getElementById('chapterSelect');
 
-      let seriesData = null;
       let chapters = [];
       let currentIndex = -1;
-      let loadCancel = false;
+      let totalPages = 0;
+      let loadedPages = 0;
+      let isLoading = false;
 
       backBtn.addEventListener('click', function(e) {
         e.preventDefault();
@@ -61,7 +62,7 @@
       fetch('data/series.json')
         .then(r => r.json())
         .then(data => {
-          seriesData = data.find(s => s.id === seriesId);
+          const seriesData = data.find(s => s.id === seriesId);
           if (!seriesData) throw new Error('Series tidak ditemukan');
           chapters = seriesData.chapters.sort((a,b) => b.num - a.num);
           currentIndex = chapters.findIndex(c => c.folder === chapterFolder);
@@ -69,7 +70,6 @@
 
           titleEl.textContent = seriesData.title;
 
-          // Isi dropdown
           chapterSelect.innerHTML = '';
           chapters.forEach((c, i) => {
             const opt = document.createElement('option');
@@ -85,65 +85,94 @@
               currentIndex = idx;
               const ch = chapters[currentIndex];
               history.pushState(null, '', 'reader.html?series=' + seriesId + '&chapter=' + ch.folder);
-              loadChapter(currentIndex);
-              updateNav();
+              resetAndLoadChapter(currentIndex);
               window.scrollTo(0, 0);
             }
           });
 
-          loadChapter(currentIndex);
-          updateNav();
+          resetAndLoadChapter(currentIndex);
         })
         .catch(err => {
           pagesEl.innerHTML = `<div class="empty">Error: ${err.message}</div>`;
         });
 
+      function resetAndLoadChapter(index) {
+        pagesEl.innerHTML = '';
+        totalPages = 0;
+        loadedPages = 0;
+        isLoading = false;
+        loadChapter(index);
+        updateNav();
+      }
+
       function loadChapter(index) {
         const ch = chapters[index];
         if (!ch) return;
-
-        // Reset
-        pagesEl.innerHTML = '';
         const base = 'series/' + seriesId + '/' + ch.folder + '/';
-        let pageNum = 1;
-        const maxPages = 80;
         const formats = ['jpg', 'png', 'webp', 'jpeg', 'bmp'];
+        const batchSize = 10;
 
         function pad(n) { return String(n).padStart(2, '0'); }
 
-        function tryLoad() {
-          if (pageNum > maxPages) {
-            if (pagesEl.children.length === 0) {
-              pagesEl.innerHTML = `<div class="empty">Tidak ada gambar di folder ini.</div>`;
-            }
-            return;
-          }
-
-          let attempt = 0;
-          function attemptLoad() {
-            if (attempt >= formats.length) {
-              pageNum++;
-              tryLoad();
-              return;
-            }
-
+        function probePage(pageNum) {
+          return new Promise((resolve) => {
+            if (pageNum > 200) return resolve(null); // batas maksimal 200 halaman
+            let attempt = 0;
             const img = new Image();
-            const src = base + pad(pageNum) + '.' + formats[attempt];
-            img.onload = function() {
-              pagesEl.appendChild(img);
-              pageNum++;
-              tryLoad();
+            const tryNext = () => {
+              if (attempt >= formats.length) {
+                return resolve(null); // tidak ada format yang cocok
+              }
+              const src = base + pad(pageNum) + '.' + formats[attempt];
+              img.onload = () => resolve(src);
+              img.onerror = () => { attempt++; tryNext(); };
+              img.src = src;
             };
-            img.onerror = function() {
-              attempt++;
-              attemptLoad();
-            };
-            img.src = src;
-          }
-          attemptLoad();
+            tryNext();
+          });
         }
 
-        tryLoad();
+        async function loadBatch(startPage) {
+          isLoading = true;
+          let loadedInBatch = 0;
+          for (let i = startPage; i < startPage + batchSize; i++) {
+            const src = await probePage(i);
+            if (src) {
+              const img = document.createElement('img');
+              img.src = src;
+              img.loading = 'lazy';
+              img.decoding = 'async';
+              pagesEl.appendChild(img);
+              loadedInBatch++;
+              totalPages = Math.max(totalPages, i);
+            } else {
+              break; // jika tidak ada lagi, stop
+            }
+          }
+          loadedPages = totalPages;
+          isLoading = false;
+
+          if (loadedInBatch === 0 && startPage === 1) {
+            pagesEl.innerHTML = '<div class="empty">Tidak ada gambar di folder ini.</div>';
+          }
+        }
+
+        // Load batch pertama (1-10)
+        loadBatch(1);
+
+        // Scroll listener untuk load batch berikutnya
+        let scrollTimeout;
+        window.addEventListener('scroll', function() {
+          clearTimeout(scrollTimeout);
+          scrollTimeout = setTimeout(() => {
+            if (isLoading) return;
+            if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 800) {
+              if (loadedPages < 200) {
+                loadBatch(loadedPages + 1);
+              }
+            }
+          }, 200);
+        });
 
         // Simpan progress
         try {
@@ -161,7 +190,6 @@
         if (chapterSelect) chapterSelect.value = currentIndex;
       }
 
-      // Hapus semua listener lama dengan clone
       const newPrev = prevBtn.cloneNode(true);
       const newNext = nextBtn.cloneNode(true);
       prevBtn.parentNode.replaceChild(newPrev, prevBtn);
@@ -172,8 +200,7 @@
           currentIndex++;
           const ch = chapters[currentIndex];
           history.pushState(null, '', 'reader.html?series=' + seriesId + '&chapter=' + ch.folder);
-          loadChapter(currentIndex);
-          updateNav();
+          resetAndLoadChapter(currentIndex);
           window.scrollTo(0, 0);
         }
       });
@@ -183,40 +210,15 @@
           currentIndex--;
           const ch = chapters[currentIndex];
           history.pushState(null, '', 'reader.html?series=' + seriesId + '&chapter=' + ch.folder);
-          loadChapter(currentIndex);
-          updateNav();
+          resetAndLoadChapter(currentIndex);
           window.scrollTo(0, 0);
         }
       });
 
-      // Keyboard shortcut
+      // Keyboard
       document.addEventListener('keydown', function(e) {
         if (e.key === 'ArrowLeft') newPrev.click();
         if (e.key === 'ArrowRight') newNext.click();
-      });
-
-      window.addEventListener('load', function() {
-        try {
-          const saved = localStorage.getItem('gitmanhwa_progress_' + seriesId);
-          if (saved) {
-            const data = JSON.parse(saved);
-            if (data.scrollY) window.scrollTo(0, data.scrollY);
-          }
-        } catch(e) {}
-      });
-
-      let scrollTimer;
-      window.addEventListener('scroll', function() {
-        clearTimeout(scrollTimer);
-        scrollTimer = setTimeout(function() {
-          try {
-            const progress = {
-              chapter: chapters[currentIndex]?.folder || '',
-              scrollY: window.scrollY
-            };
-            localStorage.setItem('gitmanhwa_progress_' + seriesId, JSON.stringify(progress));
-          } catch(e) {}
-        }, 500);
       });
     })();
   </script>
