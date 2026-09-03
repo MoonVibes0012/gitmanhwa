@@ -8,7 +8,7 @@
 </head>
 <body>
 
-  <!-- ===== HEADER (Sederhana) ===== -->
+  <!-- ===== HEADER ===== -->
   <header>
     <div class="header-container">
       <a href="index.html" class="logo">
@@ -52,7 +52,7 @@
     </div>
   </section>
 
-  <!-- ===== PENGUMUMAN (Sesuai foto) ===== -->
+  <!-- ===== PENGUMUMAN ===== -->
   <section class="section announcement-section">
     <div class="section-header">
       <h3 class="section-title">Pengumuman</h3>
@@ -90,7 +90,7 @@
     <p>🦈 GITMANHWA &copy; 2026</p>
   </footer>
 
-  <!-- ===== BOTTOM NAVIGATION (Baru) ===== -->
+  <!-- ===== BOTTOM NAVIGATION ===== -->
   <nav class="bottom-nav">
     <a href="index.html" class="nav-item active" data-page="home">
       <span class="nav-icon">🏠</span>
@@ -115,6 +115,15 @@
     document.addEventListener('copy', (e) => e.preventDefault());
     document.addEventListener('cut', (e) => e.preventDefault());
     document.addEventListener('contextmenu', (e) => e.preventDefault());
+
+    // Register Service Worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+          .then(reg => console.log('SW registered:', reg.scope))
+          .catch(err => console.log('SW registration failed:', err));
+      });
+    }
   </script>
   <script src="js/app.js"></script>
 </body>
