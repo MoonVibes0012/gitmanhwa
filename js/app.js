@@ -51,7 +51,7 @@ function renderSlider() {
 
   container.innerHTML = slides.map((s, i) => {
     const coverHtml = s.cover 
-      ? `<img src="${s.cover}" class="slide-cover" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+      ? `<img src="${s.cover}" class="slide-cover" loading="lazy" decoding="async" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
       : '';
     const fallbackHtml = `<div class="slide-cover-fallback" style="display:${s.cover ? 'none' : 'flex'}">${s.title.charAt(0)}</div>`;
     
@@ -100,9 +100,6 @@ function goToSlide(index) {
 
 // ===== PENGUMUMAN =====
 function renderAnnouncement() {
-  const section = document.querySelector('.announcement-section');
-  if (!section) return;
-  // Static content sudah ada di HTML, ini hanya placeholder untuk event
   const card = document.querySelector('.announcement-card');
   if (card) {
     card.addEventListener('click', () => {
@@ -118,7 +115,6 @@ function renderSeriesGrid(tab = 'home', genre = 'all') {
 
   let filtered = [...SERIES];
 
-  // TAB FILTER
   if (tab === 'populer' || tab === 'explore') {
     filtered = filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0));
   } else if (tab === 'selesai' || tab === 'library') {
@@ -127,7 +123,6 @@ function renderSeriesGrid(tab = 'home', genre = 'all') {
     // semua series
   }
 
-  // GENRE FILTER
   if (genre !== 'all') {
     filtered = filtered.filter(s => s.genre && s.genre.some(g => 
       g.toLowerCase() === genre.toLowerCase()
@@ -142,7 +137,7 @@ function renderSeriesGrid(tab = 'home', genre = 'all') {
   grid.innerHTML = filtered.map(s => `
     <a href="series.html?id=${s.id}" class="series-card">
       <div class="series-cover">
-        <img src="${s.cover || ''}" alt="${s.title}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+        <img src="${s.cover || ''}" alt="${s.title}" loading="lazy" decoding="async" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
         <div class="cover-fallback" style="display:none">${s.title.charAt(0)}</div>
         <span class="flag">${s.flag || ''}</span>
       </div>
@@ -195,7 +190,7 @@ function renderUpdates() {
     const genreTags = s.genre ? s.genre.slice(0, 2).map(g => `<span class="genre-tag">${g}</span>`).join('') : '';
 
     const coverImg = s.cover 
-      ? `<img src="${s.cover}" onerror="this.style.display='none'">` 
+      ? `<img src="${s.cover}" loading="lazy" decoding="async" onerror="this.style.display='none'">` 
       : `<div class="cover-placeholder" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#2a2a3e,#1a1a2e);color:#555;font-size:20px;font-weight:bold;">${s.title.charAt(0)}</div>`;
 
     return `
