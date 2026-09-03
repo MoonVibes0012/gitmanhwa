@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /series/
+
+Sitemap: https://moonvibes0012.github.io/gitmanhwa/sitemap.xml
