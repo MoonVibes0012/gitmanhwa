@@ -4,6 +4,36 @@ let SERIES = [];
 let currentSlide = 0;
 let slideInterval;
 
+// ===== TAMPILKAN SKELETON DULU =====
+function showSkeleton() {
+  const grid = document.getElementById('seriesGrid');
+  const updateList = document.getElementById('updateList');
+
+  if (grid) {
+    grid.innerHTML = Array(6).fill(`
+      <div class="skeleton-card">
+        <div class="skeleton"></div>
+        <div class="skeleton-title skeleton"></div>
+      </div>
+    `).join('');
+  }
+
+  if (updateList) {
+    updateList.innerHTML = Array(3).fill(`
+      <div class="skeleton-item">
+        <div class="skeleton-cover skeleton"></div>
+        <div class="skeleton-info">
+          <div class="skeleton-line w-75 skeleton"></div>
+          <div class="skeleton-line w-50 skeleton"></div>
+        </div>
+      </div>
+    `).join('');
+  }
+}
+
+// Panggil skeleton saat halaman dimuat
+showSkeleton();
+
 // ===== LOAD DATA =====
 fetch('data/series.json')
   .then(r => {
@@ -17,6 +47,8 @@ fetch('data/series.json')
   })
   .catch(err => {
     console.error('❌ Error:', err);
+    const grid = document.getElementById('seriesGrid');
+    if (grid) grid.innerHTML = `<div class="empty">❌ Gagal load data: ${err.message}</div>`;
   });
 
 // ===== RENDER ALL =====
