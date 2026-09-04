@@ -12,8 +12,8 @@
   --star: #fbbf24;
   --ongoing: #22c55e;
   --completed: #6b7280;
-  --new: #f59e0b;
   --popular: #ef4444;
+  --new: #f59e0b;
 }
 
 * {
@@ -1075,15 +1075,57 @@ header {
   border-color: var(--accent);
 }
 
-/* ===== EMPTY & MISC ===== */
-.empty {
-  text-align: center;
-  padding: 40px 20px;
-  color: var(--muted);
-  font-size: 14px;
-  width: 100%;
+/* ===== SKELETON LOADING ===== */
+.skeleton {
+  background: linear-gradient(90deg, #1a1a24 25%, #222233 37%, #1a1a24 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+  border-radius: 8px;
 }
 
+@keyframes shimmer {
+  0% { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
+}
+
+.skeleton-card {
+  width: 100%;
+  aspect-ratio: 3/4;
+  border-radius: 10px;
+}
+
+.skeleton-card .skeleton-title {
+  height: 14px;
+  width: 80%;
+  margin: 8px auto 0;
+}
+
+.skeleton-item {
+  display: flex;
+  gap: 14px;
+  padding: 12px;
+  border-radius: 10px;
+}
+
+.skeleton-item .skeleton-cover {
+  width: 60px;
+  height: 80px;
+  flex-shrink: 0;
+}
+
+.skeleton-item .skeleton-info {
+  flex: 1;
+}
+
+.skeleton-item .skeleton-line {
+  height: 12px;
+  margin-bottom: 8px;
+}
+
+.skeleton-item .skeleton-line.w-75 { width: 75%; }
+.skeleton-item .skeleton-line.w-50 { width: 50%; }
+
+/* ===== FOOTER ===== */
 footer {
   text-align: center;
   padding: 20px;
@@ -1091,6 +1133,14 @@ footer {
   font-size: 13px;
   border-top: 1px solid var(--border);
   margin-top: 20px;
+  width: 100%;
+}
+
+.empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--muted);
+  font-size: 14px;
   width: 100%;
 }
 
