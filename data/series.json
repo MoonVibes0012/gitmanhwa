@@ -2,6 +2,7 @@
   {
     "id": "taylor",
     "title": "Taylor",
+    "altTitle": "The Extra's Academy Survival Guide",
     "author": "Penyusun Mimpi",
     "synopsis": "Taylor adalah seorang gadis biasa yang tiba-tiba bisa melihat makhluk halus. Hidupnya berubah drastis ketika dia bertemu dengan seorang pemburu iblis yang misterius. Petualangan supernatural dimulai!",
     "genre": ["Action", "Fantasy", "Horror"],
@@ -10,21 +11,59 @@
     "type": "Manhwa",
     "status": "Ongoing",
     "cover": "series/taylor/cover.jpg",
+    "badge": "3d",
     "chapters": [
-      { "num": 9, "folder": "chapter-9" },
-      { "num": 8, "folder": "chapter-8" },
-      { "num": 7, "folder": "chapter-7" },
-      { "num": 6, "folder": "chapter-6" },
-      { "num": 5, "folder": "chapter-5" },
-      { "num": 4, "folder": "chapter-4" },
-      { "num": 3, "folder": "chapter-3" },
-      { "num": 2, "folder": "chapter-2" },
-      { "num": 1, "folder": "chapter-1" }
+      {
+        "num": 9,
+        "folder": "chapter-9",
+        "timestamp": "2026-09-05T20:15:00"
+      },
+      {
+        "num": 8,
+        "folder": "chapter-8",
+        "timestamp": "2026-09-05T18:00:00"
+      },
+      {
+        "num": 7,
+        "folder": "chapter-7",
+        "timestamp": "2026-09-04T20:00:00"
+      },
+      {
+        "num": 6,
+        "folder": "chapter-6",
+        "timestamp": "2026-09-04T15:00:00"
+      },
+      {
+        "num": 5,
+        "folder": "chapter-5",
+        "timestamp": "2026-09-03T10:00:00"
+      },
+      {
+        "num": 4,
+        "folder": "chapter-4",
+        "timestamp": "2026-09-01T09:00:00"
+      },
+      {
+        "num": 3,
+        "folder": "chapter-3",
+        "timestamp": "2026-08-30T12:00:00"
+      },
+      {
+        "num": 2,
+        "folder": "chapter-2",
+        "timestamp": "2026-08-28T14:00:00"
+      },
+      {
+        "num": 1,
+        "folder": "chapter-1",
+        "timestamp": "2026-08-25T08:00:00"
+      }
     ]
   },
   {
     "id": "kisah-kultivator",
     "title": "Kisah Kultivator Pembantai Demon",
+    "altTitle": "The Regressed Demon Lord is Kind",
     "author": "Master Dao",
     "synopsis": "Seorang kultivator terkuat di dunia kultivasi tiba-tiba terlempar ke dunia modern. Dengan kekuatan dewa, dia harus melindungi dunia dari iblis yang mengancam.",
     "genre": ["Action", "Fantasy", "Comedy"],
@@ -33,13 +72,19 @@
     "type": "Manhwa",
     "status": "Ongoing",
     "cover": "series/kisah-kultivator/cover.png",
+    "badge": "4d",
     "chapters": [
-      { "num": 1, "folder": "chapter-1" }
+      {
+        "num": 1,
+        "folder": "chapter-1",
+        "timestamp": "2026-09-05T21:00:00"
+      }
     ]
   },
   {
     "id": "pemuda-abadi",
     "title": "Pemuda Abadi",
+    "altTitle": "Necromancer Without Limits",
     "author": "Abadi Studio",
     "synopsis": "Seorang pemuda yang tidak bisa mati. Hidup selama ribuan tahun membuatnya bosan. Namun ketika dunia mulai kacau, dia memutuskan untuk turun tangan.",
     "genre": ["Action", "Drama", "Romance"],
@@ -48,8 +93,147 @@
     "type": "Manhwa",
     "status": "Ongoing",
     "cover": "series/pemuda-abadi/cover.png",
+    "badge": "4mo",
     "chapters": [
-      { "num": 1, "folder": "chapter-1" }
+      {
+        "num": 1,
+        "folder": "chapter-1",
+        "timestamp": "2026-09-05T19:30:00"
+      }
+    ]
+  },
+  {
+    "id": "tambahan-1",
+    "title": "Necromancer Tanpa Batas",
+    "altTitle": "Necromancer Without Limits",
+    "author": "Studio Abadi",
+    "synopsis": "Seorang pria dengan kemampuan necromancy terkuat mencoba membangun ulang hidupnya yang hancur. Tapi kekuatannya menarik perhatian dunia bawah.",
+    "genre": ["Action", "Fantasy", "Drama"],
+    "rating": 8.9,
+    "flag": "🇰🇷",
+    "type": "Manhwa",
+    "status": "Ongoing",
+    "cover": "series/tambahan-1/cover.jpg",
+    "badge": "5mo",
+    "chapters": [
+      {
+        "num": 3,
+        "folder": "chapter-3",
+        "timestamp": "2026-09-05T17:00:00"
+      },
+      {
+        "num": 2,
+        "folder": "chapter-2",
+        "timestamp": "2026-09-04T14:00:00"
+      },
+      {
+        "num": 1,
+        "folder": "chapter-1",
+        "timestamp": "2026-09-02T11:00:00"
+      }
+    ]
+  },
+  {
+    "id": "tambahan-2",
+    "title": "Regresi Absolut",
+    "altTitle": "Absolute Regression",
+    "author": "Makna Studio",
+    "synopsis": "Setelah kematian tragis, seorang pria kembali ke masa lalu. Kali ini, dia bertekad mengubah takdirnya dengan kemampuan baru yang misterius.",
+    "genre": ["Action", "Drama", "Fantasy"],
+    "rating": 8.7,
+    "flag": "🇰🇷",
+    "type": "Manhwa",
+    "status": "Ongoing",
+    "cover": "series/tambahan-2/cover.jpg",
+    "badge": "2d",
+    "chapters": [
+      {
+        "num": 5,
+        "folder": "chapter-5",
+        "timestamp": "2026-09-05T16:30:00"
+      },
+      {
+        "num": 4,
+        "folder": "chapter-4",
+        "timestamp": "2026-09-04T13:00:00"
+      },
+      {
+        "num": 3,
+        "folder": "chapter-3",
+        "timestamp": "2026-09-03T12:00:00"
+      },
+      {
+        "num": 2,
+        "folder": "chapter-2",
+        "timestamp": "2026-09-01T09:00:00"
+      },
+      {
+        "num": 1,
+        "folder": "chapter-1",
+        "timestamp": "2026-08-30T07:00:00"
+      }
+    ]
+  },
+  {
+    "id": "tambahan-3",
+    "title": "Iblis Terkuat di Dunia",
+    "altTitle": "Return of the Blossoming Blade",
+    "author": "Grup Saga",
+    "synopsis": "Pedang legendaris kembali ke dunia. Pemilik barunya harus menghadapi klan-klan kuat yang menginginkan kekuatan itu untuk kejahatan.",
+    "genre": ["Action", "Fantasy", "Comedy"],
+    "rating": 8.5,
+    "flag": "🇰🇷",
+    "type": "Manhwa",
+    "status": "Ongoing",
+    "cover": "series/tambahan-3/cover.jpg",
+    "badge": "6d",
+    "chapters": [
+      {
+        "num": 4,
+        "folder": "chapter-4",
+        "timestamp": "2026-09-05T12:00:00"
+      },
+      {
+        "num": 3,
+        "folder": "chapter-3",
+        "timestamp": "2026-09-04T10:00:00"
+      },
+      {
+        "num": 2,
+        "folder": "chapter-2",
+        "timestamp": "2026-09-03T08:00:00"
+      },
+      {
+        "num": 1,
+        "folder": "chapter-1",
+        "timestamp": "2026-09-01T07:00:00"
+      }
+    ]
+  },
+  {
+    "id": "tambahan-4",
+    "title": "Teman Kecil Terkuat di Dunia",
+    "altTitle": "The World's Strongest Little Brother",
+    "author": "Karya Abadi",
+    "synopsis": "Seorang kakak perempuan harus melindungi adiknya yang ternyata memiliki kekuatan tersembunyi yang bisa menghancurkan dunia.",
+    "genre": ["Action", "Drama", "Romance"],
+    "rating": 8.3,
+    "flag": "🇰🇷",
+    "type": "Manhwa",
+    "status": "Ongoing",
+    "cover": "series/tambahan-4/cover.jpg",
+    "badge": "1yr",
+    "chapters": [
+      {
+        "num": 2,
+        "folder": "chapter-2",
+        "timestamp": "2026-09-05T15:00:00"
+      },
+      {
+        "num": 1,
+        "folder": "chapter-1",
+        "timestamp": "2026-09-04T15:00:00"
+      }
     ]
   }
 ]
