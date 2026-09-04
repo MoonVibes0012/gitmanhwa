@@ -41,18 +41,22 @@ const Format = {
   rating(num) {
     return num ? num.toFixed(1) : '?';
   },
-  // Format waktu relatif: tanggal -> "3 hari lalu"
-  timeAgo(dateString) {
-    const date = new Date(dateString);
+  // Format waktu relatif: timestamp -> "x menit lalu", "x jam lalu"
+  timeAgo(timestamp) {
+    if (!timestamp) return 'baru saja';
+    const date = new Date(timestamp);
     const now = new Date();
     const diff = Math.floor((now - date) / 1000);
+
     if (diff < 60) return 'baru saja';
     const mins = Math.floor(diff / 60);
     if (mins < 60) return `${mins} menit lalu`;
     const hours = Math.floor(mins / 60);
     if (hours < 24) return `${hours} jam lalu`;
     const days = Math.floor(hours / 24);
-    if (days < 30) return `${days} hari lalu`;
+    if (days < 7) return `${days} hari lalu`;
+    const weeks = Math.floor(days / 7);
+    if (weeks < 4) return `${weeks} minggu lalu`;
     const months = Math.floor(days / 30);
     if (months < 12) return `${months} bulan lalu`;
     const years = Math.floor(months / 12);
