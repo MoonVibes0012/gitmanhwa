@@ -96,11 +96,11 @@ function renderSlider() {
   }
 
   container.innerHTML = slides.map((s, i) => {
-    const coverHtml = s.cover 
+    const coverHtml = s.cover
       ? `<img src="${s.cover}" class="slide-cover" loading="lazy" decoding="async" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
       : '';
     const fallbackHtml = `<div class="slide-cover-fallback" style="display:${s.cover ? 'none' : 'flex'}">${s.title.charAt(0)}</div>`;
-    
+
     return `
       <div class="slide ${i === 0 ? 'active' : ''}" data-index="${i}">
         ${coverHtml}
@@ -168,7 +168,7 @@ function renderSeriesGrid(tab = 'home', genre = 'all', targetGrid) {
   }
 
   if (genre !== 'all') {
-    filtered = filtered.filter(s => s.genre && s.genre.some(g => 
+    filtered = filtered.filter(s => s.genre && s.genre.some(g =>
       g.toLowerCase() === genre.toLowerCase()
     ));
   }
@@ -203,7 +203,7 @@ function updateSeriesCount() {
   el.textContent = visible + ' series';
 }
 
-// ===== UPDATES =====
+// ===== UPDATES (Dengan Waktu Real) =====
 function renderUpdates() {
   const list = document.getElementById('updateList');
   if (!list) return;
@@ -225,14 +225,14 @@ function renderUpdates() {
     const chaptersHtml = latest.map(c => `
       <a href="reader.html?series=${s.id}&chapter=${c.folder}" class="chapter-row">
         <span class="chapter-name">Chapter ${c.num}</span>
-        <span class="chapter-time">baru</span>
+        <span class="chapter-time" data-timestamp="${c.timestamp || ''}">${c.timestamp ? Format.timeAgo(c.timestamp) : 'baru'}</span>
       </a>
     `).join('');
 
     const genreTags = s.genre ? s.genre.slice(0, 2).map(g => `<span class="genre-tag">${g}</span>`).join('') : '';
 
-    const coverImg = s.cover 
-      ? `<img src="${s.cover}" loading="lazy" decoding="async" onerror="this.style.display='none'">` 
+    const coverImg = s.cover
+      ? `<img src="${s.cover}" loading="lazy" decoding="async" onerror="this.style.display='none'">`
       : `<div class="cover-placeholder" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#2a2a3e,#1a1a2e);color:#555;font-size:20px;font-weight:bold;">${s.title.charAt(0)}</div>`;
 
     return `
@@ -267,6 +267,7 @@ function renderExplorePage() {
   const horizontalScroll = document.getElementById('horizontalScroll');
   const exploreGrid = document.getElementById('exploreGrid');
   const tabBanner = document.getElementById('tabBanner');
+  const continueEmpty = document.getElementById('continueEmpty');
 
   if (!heroBanner || !horizontalScroll || !exploreGrid) return;
 
@@ -304,10 +305,9 @@ function renderExplorePage() {
   renderSeriesGrid('all', 'all', exploreGrid);
 
   // 4. Lanjut Baca
-  const continueEmpty = document.getElementById('continueEmpty');
   let hasHistory = false;
   SERIES.forEach(s => {
-    if (localStorage.getItem('gitmanhwa_progress_' + s.id)) hasHistory = true;
+    if (Progress.exists(s.id)) hasHistory = true;
   });
 
   if (hasHistory) {
@@ -348,7 +348,7 @@ function renderExplorePage() {
 function updateNavActive() {
   const params = new URLSearchParams(location.search);
   const tab = params.get('tab') || 'home';
-  
+
   document.querySelectorAll('.bottom-nav .nav-item').forEach(item => {
     item.classList.remove('active');
     const page = item.dataset.page;
@@ -407,10 +407,20 @@ if (searchInput) {
   });
 }
 
-// ===== BLOCKIR COPY =====
+// ===== BLOKIR COPY =====
 document.addEventListener('copy', (e) => e.preventDefault());
 document.addEventListener('cut', (e) => e.preventDefault());
 document.addEventListener('contextmenu', (e) => e.preventDefault());
+
+// ===== UPDATE WAKTU RELATIF SETIAP 30 DETIK =====
+setInterval(() => {
+  document.querySelectorAll('.chapter-time').forEach(el => {
+    const timestamp = el.getAttribute('data-timestamp');
+    if (timestamp) {
+      el.textContent = Format.timeAgo(timestamp);
+    }
+  });
+}, 30000);
 
 // ===== INIT =====
 setTimeout(updateNavActive, 100);
