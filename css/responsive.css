@@ -1,0 +1,361 @@
+/* ===================================================================
+   GITMANHWA - RESPONSIVE.CSS
+   Semua aturan tampilan untuk layar kecil (HP, Tablet, dll)
+   Dipisahkan dari style.css agar kode lebih terstruktur
+   =================================================================== */
+
+/* ===== LAYAR SANGAT KECIL (max-width: 360px) ===== */
+@media (max-width: 360px) {
+  .logo {
+    font-size: 15px;
+  }
+
+  .logo-icon {
+    width: 26px;
+    height: 26px;
+    font-size: 13px;
+  }
+
+  .header-container {
+    height: 50px;
+  }
+
+  .slide-cover,
+  .slide-cover-fallback {
+    width: 70px;
+    height: 100px;
+  }
+
+  .slider-container {
+    height: 180px;
+  }
+
+  .slider-container .slide {
+    padding: 10px;
+    gap: 10px;
+  }
+
+  .slide-info h2 {
+    font-size: 13px;
+  }
+
+  .series-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+  }
+
+  .series-cover {
+    aspect-ratio: 3/4;
+  }
+
+  .series-meta {
+    padding: 6px 8px;
+  }
+
+  .series-title {
+    font-size: 11px;
+  }
+
+  .series-info {
+    font-size: 10px;
+  }
+
+  .chapter-grid {
+    grid-template-columns: repeat(auto-fill, minmax(75px, 1fr));
+  }
+
+  .chapter-btn {
+    font-size: 11px;
+    padding: 8px;
+  }
+
+  .horizontal-card {
+    width: 90px;
+  }
+
+  .horizontal-card img {
+    height: 120px;
+  }
+
+  .hero-banner {
+    height: 160px;
+  }
+
+  .hero-banner-content h2 {
+    font-size: 15px;
+  }
+
+  .reader-header {
+    padding: 8px 10px;
+  }
+
+  .reader-nav button {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+
+  .bottom-nav {
+    height: 54px;
+  }
+
+  .nav-icon {
+    font-size: 18px;
+  }
+
+  .nav-label {
+    font-size: 9px;
+  }
+}
+
+/* ===== LAYAR KECIL (max-width: 480px) ===== */
+@media (max-width: 480px) {
+  .slide-cover,
+  .slide-cover-fallback {
+    width: 90px;
+    height: 130px;
+  }
+
+  .slider-container {
+    height: 220px;
+  }
+
+  .slider-container .slide {
+    padding: 14px;
+    gap: 12px;
+  }
+
+  .slide-info h2 {
+    font-size: 16px;
+  }
+
+  .slide-info .slide-meta {
+    font-size: 11px;
+  }
+
+  .slide-info .slide-desc {
+    font-size: 11px;
+    -webkit-line-clamp: 2;
+  }
+
+  .slide-btn {
+    padding: 6px 14px;
+    font-size: 11px;
+  }
+
+  .series-grid {
+    gap: 8px;
+  }
+
+  .series-hero-cover {
+    width: 100px;
+    height: 140px;
+  }
+
+  .series-hero-info h1 {
+    font-size: 18px;
+  }
+
+  .reader-nav button {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  .hero-banner {
+    height: 180px;
+  }
+
+  .hero-banner-content h2 {
+    font-size: 16px;
+  }
+
+  .hero-banner-content p {
+    font-size: 12px;
+  }
+
+  .horizontal-scroll {
+    gap: 8px;
+  }
+
+  .horizontal-card {
+    width: 100px;
+  }
+
+  .horizontal-card img {
+    height: 140px;
+  }
+
+  .explore-tab {
+    padding: 8px 14px;
+    font-size: 12px;
+  }
+
+  .announcement-card {
+    padding: 8px 12px;
+  }
+
+  .announcement-cover {
+    width: 34px;
+    height: 34px;
+    font-size: 16px;
+  }
+
+  .announcement-text {
+    font-size: 13px;
+  }
+
+  .header-actions {
+    gap: 4px;
+  }
+
+  .icon-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 13px;
+  }
+}
+
+/* ===== LAYAR SEDANG (max-width: 640px) ===== */
+@media (max-width: 640px) {
+  .series-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .section-title {
+    font-size: 15px;
+  }
+
+  .section-count {
+    font-size: 11px;
+  }
+
+  .update-item {
+    padding: 10px;
+  }
+
+  .update-cover {
+    width: 50px;
+    height: 66px;
+  }
+
+  .update-title {
+    font-size: 12px;
+  }
+
+  .chapter-time {
+    font-size: 10px;
+  }
+
+  .genre-filter {
+    gap: 6px;
+  }
+
+  .genre-btn {
+    padding: 5px 12px;
+    font-size: 11px;
+  }
+
+  .slider-dots {
+    padding: 8px 0;
+  }
+}
+
+/* ===== TABLET (min-width: 640px & max-width: 900px) ===== */
+@media (min-width: 640px) and (max-width: 900px) {
+  .series-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .slide-cover,
+  .slide-cover-fallback {
+    width: 110px;
+    height: 150px;
+  }
+
+  .slider-container {
+    height: 250px;
+  }
+
+  .slide-info h2 {
+    font-size: 18px;
+  }
+
+  .hero-banner {
+    height: 200px;
+  }
+
+  .reader-header {
+    padding: 12px 16px;
+  }
+
+  .chapter-select {
+    max-width: 120px;
+  }
+}
+
+/* ===== LAYAR BESAR (min-width: 900px) ===== */
+@media (min-width: 900px) {
+  .series-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+
+  .explore-section {
+    padding: 20px;
+  }
+
+  .horizontal-scroll {
+    gap: 12px;
+  }
+
+  .horizontal-card {
+    width: 130px;
+  }
+
+  .horizontal-card img {
+    height: 180px;
+  }
+
+  .hero-banner {
+    height: 300px;
+  }
+
+  .hero-banner-content h2 {
+    font-size: 26px;
+  }
+
+  .hero-banner-content p {
+    font-size: 14px;
+  }
+
+  .section-title {
+    font-size: 19px;
+  }
+
+  .reader-pages img {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+}
+
+/* ===== LAYAR SANGAT BESAR (min-width: 1200px) ===== */
+@media (min-width: 1200px) {
+  .series-grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+
+  .header-container,
+  .section,
+  .featured-section,
+  .explore-section {
+    max-width: 1200px;
+  }
+
+  .slide-cover,
+  .slide-cover-fallback {
+    width: 160px;
+    height: 220px;
+  }
+
+  .slider-container {
+    height: 300px;
+  }
+    }
