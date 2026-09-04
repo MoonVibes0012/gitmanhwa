@@ -229,7 +229,7 @@ function renderUpdates() {
   });
 }
 
-// ===== RENDER EXPLORE PAGE (BARU) =====
+// ===== RENDER EXPLORE PAGE =====
 function renderExplorePage() {
   const heroBanner = document.getElementById('heroBanner');
   const horizontalScroll = document.getElementById('horizontalScroll');
@@ -258,7 +258,7 @@ function renderExplorePage() {
     `;
   }
 
-  // 2. Horizontal Scroll (Menggunakan badge waktu statis simulasi)
+  // 2. Horizontal Scroll
   const badges = ['3d', '4d', '4mo', '2d', '5mo', '3d', '3mo', '6d', '1yr', '2d'];
   horizontalScroll.innerHTML = sorted.slice(0, 10).map((s, i) => `
     <a href="series.html?id=${s.id}" class="horizontal-card">
@@ -271,7 +271,7 @@ function renderExplorePage() {
   // 3. Grid Utama Explore
   renderSeriesGrid('all', 'all', exploreGrid);
 
-  // 4. Lanjut Baca (Cek localStorage progress)
+  // 4. Lanjut Baca
   const continueEmpty = document.getElementById('continueEmpty');
   let hasHistory = false;
   SERIES.forEach(s => {
@@ -284,7 +284,7 @@ function renderExplorePage() {
     continueEmpty.innerHTML = "Belum ada Data<br><br>Kamu belum punya riwayat baca";
   }
 
-  // 5. Tab Rekomendasi / Pilihan Admin (Ubah Banner di bawah)
+  // 5. Tab Rekomendasi / Pilihan Admin
   const tabs = document.querySelectorAll('.explore-tab');
   tabs.forEach(tab => {
     tab.addEventListener('click', function() {
@@ -356,7 +356,12 @@ if (searchBtn) {
 }
 
 if (closeSearch) closeSearch.addEventListener('click', () => searchModal.classList.remove('show'));
-if (searchModal) searchModal.addEventListener('click', (e) => { if (e.target === searchModal) searchModal.classList.remove('show'); });
+
+if (searchModal) {
+  searchModal.addEventListener('click', (e) => {
+    if (e.target === searchModal) searchModal.classList.remove('show');
+  });
+}
 
 if (searchInput) {
   searchInput.addEventListener('input', function() {
