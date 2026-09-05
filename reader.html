@@ -62,16 +62,19 @@
         </div>
 
         <div class="settings-group">
-          <label class="settings-label">Autoscroll Speed</label>
-          <div class="settings-slider-wrapper">
-            <input type="range" id="speedSlider" min="0.5" max="1.5" step="0.25" value="1.0">
-            <div class="slider-labels">
-              <span>0.5</span>
-              <span>0.75</span>
-              <span>1.0</span>
-              <span>1.25</span>
-              <span>1.5</span>
-            </div>
+          <label class="settings-label">Autoscroll Speed (px/detik)</label>
+          <div class="speed-input-wrapper">
+            <input type="number" id="speedNumberInput" class="speed-number-input" min="10" max="500" step="10" value="60">
+            <span class="speed-unit">px/s</span>
+          </div>
+          <input type="range" id="speedSlider" class="speed-slider" min="10" max="500" step="10" value="60">
+          <div class="slider-labels">
+            <span>10</span>
+            <span>100</span>
+            <span>200</span>
+            <span>300</span>
+            <span>400</span>
+            <span>500</span>
           </div>
         </div>
 
@@ -133,6 +136,7 @@
       const saveSettings = document.getElementById('saveSettings');
       const laterSettings = document.getElementById('laterSettings');
       const speedSlider = document.getElementById('speedSlider');
+      const speedNumberInput = document.getElementById('speedNumberInput');
       const qualitySelect = document.getElementById('qualitySelect');
       const chapterSearchInput = document.getElementById('chapterSearchInput');
       const chapterListContainer = document.getElementById('chapterListContainer');
@@ -142,8 +146,12 @@
       let currentIndex = -1;
       let totalPages = 0;
       let isAutoScroll = false;
-      let autoScrollInterval = null;
-      let autoScrollSpeed = 1.0;
+      let animationId = null;
+      let lastTime = 0;
+      let accumulatedScroll = 0;
+
+      // Kecepatan default: 60 px/detik (bisa diubah user)
+      let autoScrollSpeed = 60;
 
       backBtn.addEventListener('click', function(e) {
         e.preventDefault();
@@ -183,7 +191,6 @@
             }
           });
 
-          // Render daftar chapter di modal
           renderChapterList();
 
           loadChapter(currentIndex);
@@ -236,7 +243,6 @@
         tryLoadPage(1);
         totalPages = loadedCount;
 
-        // Simpan progress
         try {
           localStorage.setItem('gitmanhwa_progress_' + seriesId, JSON.stringify({
             chapter: ch.folder,
@@ -257,7 +263,6 @@
           </div>
         `).join('');
 
-        // Klik chapter
         chapterListContainer.querySelectorAll('.chapter-list-item').forEach(item => {
           item.addEventListener('click', function() {
             const idx = parseInt(this.dataset.index);
@@ -273,8 +278,51 @@
         });
       }
 
+      // ===== AUTOSCROLL SMOOTH (requestAnimationFrame) =====
+      function startAutoScroll() {
+        if (isAutoScroll) return;
+        
+        isAutoScroll = true;
+        playIcon.textContent = '⏸️';
+        playPauseBtn.classList.add('active');
+        
+        lastTime = performance.now();
+        accumulatedScroll = 0;
+        
+        function scrollStep(currentTime) {
+          if (!isAutoScroll) return;
+          
+          const deltaTime = (currentTime - lastTime) / 1000; // detik
+          lastTime = currentTime;
+          
+          // Kecepatan dalam px/detik × waktu berjalan (detik)
+          const scrollAmount = autoScrollSpeed * deltaTime;
+          
+          window.scrollBy(0, scrollAmount);
+          
+          // Stop kalau sudah di bawah
+          if (window.innerHeight + window.scrollY >= document.body.scrollHeight - 10) {
+            stopAutoScroll();
+            return;
+          }
+          
+          animationId = requestAnimationFrame(scrollStep);
+        }
+        
+        animationId = requestAnimationFrame(scrollStep);
+      }
+
+      function stopAutoScroll() {
+        isAutoScroll = false;
+        playIcon.textContent = '▶️';
+        playPauseBtn.classList.remove('active');
+        if (animationId) {
+          cancelAnimationFrame(animationId);
+          animationId = null;
+        }
+      }
+
       // ===== OVERLAY BUTTONS =====
-      // Settings
       settingsBtn.addEventListener('click', () => {
         settingsModal.classList.add('show');
       });
@@ -287,22 +335,31 @@
         settingsModal.classList.remove('show');
       });
 
+      // Sinkronkan slider & input angka
+      speedSlider.addEventListener('input', function() {
+        speedNumberInput.value = this.value;
+      });
+
+      speedNumberInput.addEventListener('input', function() {
+        speedSlider.value = this.value;
+      });
+
       saveSettings.addEventListener('click', () => {
-        autoScrollSpeed = parseFloat(speedSlider.value);
-        // Simpan settings
+        autoScrollSpeed = parseFloat(speedNumberInput.value) || 60;
         localStorage.setItem('gitmanhwa_settings', JSON.stringify({
           speed: autoScrollSpeed,
           quality: qualitySelect.value
         }));
         settingsModal.classList.remove('show');
-        Toast.show('Pengaturan disimpan!', 'success');
+        showToast('Pengaturan disimpan!');
       });
 
       // Load saved settings
       const savedSettings = localStorage.getItem('gitmanhwa_settings');
       if (savedSettings) {
         const settings = JSON.parse(savedSettings);
-        autoScrollSpeed = settings.speed || 1.0;
+        autoScrollSpeed = settings.speed || 60;
+        speedNumberInput.value = autoScrollSpeed;
         speedSlider.value = autoScrollSpeed;
         qualitySelect.value = settings.quality || 'auto';
       }
@@ -316,36 +373,6 @@
         }
       });
 
-      function startAutoScroll() {
-        isAutoScroll = true;
-        playIcon.textContent = '⏸️';
-        playPauseBtn.classList.add('active');
-        
-        // Interval scroll berdasarkan kecepatan
-        const baseSpeed = 50; // px per tick
-        const interval = 1000 / (autoScrollSpeed * 10); // kecepatan dinamis
-        
-        autoScrollInterval = setInterval(() => {
-          const scrollAmount = baseSpeed * autoScrollSpeed;
-          window.scrollBy(0, scrollAmount);
-          
-          // Berhenti di bawah
-          if (window.innerHeight + window.scrollY >= document.body.scrollHeight - 10) {
-            stopAutoScroll();
-          }
-        }, interval);
-      }
-
-      function stopAutoScroll() {
-        isAutoScroll = false;
-        playIcon.textContent = '▶️';
-        playPauseBtn.classList.remove('active');
-        if (autoScrollInterval) {
-          clearInterval(autoScrollInterval);
-          autoScrollInterval = null;
-        }
-      }
-
       // Chapter List Modal
       chapterListBtn.addEventListener('click', () => {
         chapterListModal.classList.add('show');
@@ -358,21 +385,15 @@
         chapterListModal.classList.remove('show');
       });
 
-      // Search chapter
       chapterSearchInput.addEventListener('input', function() {
         const q = this.value.toLowerCase().trim();
         const items = chapterListContainer.querySelectorAll('.chapter-list-item');
         items.forEach(item => {
           const text = item.textContent.toLowerCase();
-          if (text.includes(q)) {
-            item.style.display = 'block';
-          } else {
-            item.style.display = 'none';
-          }
+          item.style.display = text.includes(q) ? 'block' : 'none';
         });
       });
 
-      // Scroll ke bawah
       scrollToBottomBtn.addEventListener('click', () => {
         window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
       });
@@ -412,27 +433,27 @@
         }
       });
 
-      // Keyboard shortcut
       document.addEventListener('keydown', function(e) {
         if (e.key === 'ArrowLeft') newPrev.click();
         if (e.key === 'ArrowRight') newNext.click();
       });
 
       // ===== TOAST (Simple) =====
-      const Toast = {
-        show(message, type = 'info') {
-          let toast = document.querySelector('.toast');
-          if (!toast) {
-            toast = document.createElement('div');
-            toast.className = 'toast';
-            document.body.appendChild(toast);
-          }
-          toast.textContent = message;
-          toast.className = 'toast toast-' + type;
-          toast.style.display = 'block';
-          setTimeout(() => toast.style.display = 'none', 3000);
+      function showToast(message) {
+        let toast = document.querySelector('.toast');
+        if (!toast) {
+          toast = document.createElement('div');
+          toast.className = 'toast';
+          document.body.appendChild(toast);
         }
-      };
+        toast.textContent = message;
+        toast.classList.add('toast-success');
+        toast.style.display = 'block';
+        setTimeout(() => {
+          toast.style.display = 'none';
+          toast.classList.remove('toast-success');
+        }, 3000);
+      }
 
       updateNav();
     })();
