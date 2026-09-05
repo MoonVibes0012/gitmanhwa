@@ -23,8 +23,83 @@
   <!-- ===== NAVIGASI ===== -->
   <div class="reader-nav">
     <button id="prevChapter">‹ Sebelumnya</button>
-    <span id="chapterIndicator">1 / ?</span>
+    <span id="chapterIndicator">1 / 1</span>
     <button id="nextChapter">Berikutnya ›</button>
+  </div>
+
+  <!-- ===== OVERLAY FLOATING BUTTONS ===== -->
+  <div class="reader-overlay-buttons">
+    <button class="overlay-btn" id="settingsBtn" title="Pengaturan">
+      <span class="overlay-icon">⚙️</span>
+    </button>
+    <button class="overlay-btn" id="playPauseBtn" title="Autoscroll">
+      <span class="overlay-icon" id="playIcon">▶️</span>
+    </button>
+    <button class="overlay-btn" id="chapterListBtn" title="Daftar Chapter">
+      <span class="overlay-icon">☰</span>
+    </button>
+  </div>
+
+  <!-- ===== MODAL SETTINGS ===== -->
+  <div class="modal" id="settingsModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Settings</h3>
+        <button class="close-modal" id="closeSettings">✕</button>
+      </div>
+      
+      <div class="settings-body">
+        <div class="settings-group">
+          <label class="settings-label">Page Quality</label>
+          <div class="settings-select-wrapper">
+            <select id="qualitySelect" class="settings-select">
+              <option value="auto">Select mirror url</option>
+              <option value="high">High</option>
+              <option value="medium">Medium</option>
+              <option value="low">Low</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <label class="settings-label">Autoscroll Speed</label>
+          <div class="settings-slider-wrapper">
+            <input type="range" id="speedSlider" min="0.5" max="1.5" step="0.25" value="1.0">
+            <div class="slider-labels">
+              <span>0.5</span>
+              <span>0.75</span>
+              <span>1.0</span>
+              <span>1.25</span>
+              <span>1.5</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-actions">
+          <button class="settings-btn-primary" id="saveSettings">Save</button>
+          <button class="settings-btn-secondary" id="laterSettings">Later</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL CHAPTER LIST ===== -->
+  <div class="modal" id="chapterListModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Search Chapter</h3>
+        <button class="close-modal" id="closeChapterList">✕</button>
+      </div>
+      
+      <div class="chapter-search-wrapper">
+        <input type="text" id="chapterSearchInput" placeholder="🔍 Search" class="chapter-search-input">
+        <button class="chapter-search-btn" id="scrollToBottomBtn">↓</button>
+      </div>
+
+      <div class="chapter-list-scroll" id="chapterListContainer">
+        <!-- Diisi JS -->
+      </div>
+    </div>
   </div>
 
   <script>
@@ -46,15 +121,36 @@
       const backBtn = document.getElementById('backBtn');
       const chapterSelect = document.getElementById('chapterSelect');
 
+      // Overlay & Modal
+      const settingsBtn = document.getElementById('settingsBtn');
+      const playPauseBtn = document.getElementById('playPauseBtn');
+      const chapterListBtn = document.getElementById('chapterListBtn');
+      const playIcon = document.getElementById('playIcon');
+      const settingsModal = document.getElementById('settingsModal');
+      const chapterListModal = document.getElementById('chapterListModal');
+      const closeSettings = document.getElementById('closeSettings');
+      const closeChapterList = document.getElementById('closeChapterList');
+      const saveSettings = document.getElementById('saveSettings');
+      const laterSettings = document.getElementById('laterSettings');
+      const speedSlider = document.getElementById('speedSlider');
+      const qualitySelect = document.getElementById('qualitySelect');
+      const chapterSearchInput = document.getElementById('chapterSearchInput');
+      const chapterListContainer = document.getElementById('chapterListContainer');
+      const scrollToBottomBtn = document.getElementById('scrollToBottomBtn');
+
       let chapters = [];
       let currentIndex = -1;
-      let totalPagesFound = 0;
+      let totalPages = 0;
+      let isAutoScroll = false;
+      let autoScrollInterval = null;
+      let autoScrollSpeed = 1.0;
 
       backBtn.addEventListener('click', function(e) {
         e.preventDefault();
         window.location.href = 'series.html?id=' + seriesId;
       });
 
+      // ===== LOAD SERIES DATA =====
       fetch('data/series.json')
         .then(r => r.json())
         .then(data => {
@@ -81,10 +177,14 @@
               currentIndex = idx;
               const ch = chapters[currentIndex];
               history.pushState(null, '', 'reader.html?series=' + seriesId + '&chapter=' + ch.folder);
+              stopAutoScroll();
               loadChapter(currentIndex);
               window.scrollTo(0, 0);
             }
           });
+
+          // Render daftar chapter di modal
+          renderChapterList();
 
           loadChapter(currentIndex);
         })
@@ -92,160 +192,192 @@
           pagesEl.innerHTML = `<div class="empty">Error: ${err.message}</div>`;
         });
 
-      // ===== SCAN CEPAT: Coba .jpg dulu, kalau gagal coba format lain =====
-      function fastScanPage(base, pageNum) {
-        return new Promise((resolve) => {
-          const pad = String(pageNum).padStart(2, '0');
-          // Coba jpg dulu (paling umum)
-          const img = new Image();
-          img.onload = () => resolve(base + pad + '.jpg');
-          img.onerror = () => {
-            // Kalau jpg gagal, coba format lain (png, webp, jpeg, bmp)
-            const formats = ['png', 'webp', 'jpeg', 'bmp'];
-            let attempt = 0;
-            const tryFormat = () => {
-              if (attempt >= formats.length) {
-                resolve(null);
-                return;
-              }
-              const img2 = new Image();
-              img2.onload = () => resolve(base + pad + '.' + formats[attempt]);
-              img2.onerror = () => {
-                attempt++;
-                tryFormat();
-              };
-              img2.src = base + pad + '.' + formats[attempt];
-            };
-            tryFormat();
-          };
-          img.src = base + pad + '.jpg';
-        });
-      }
-
-      // ===== RENDER PER 40 HALAMAN =====
+      // ===== LOAD CHAPTER =====
       function loadChapter(index) {
         const ch = chapters[index];
         if (!ch) return;
 
-        // Reset
-        pagesEl.innerHTML = '<div class="empty">Memuat gambar...</div>';
+        stopAutoScroll();
+        pagesEl.innerHTML = '';
         const base = 'series/' + seriesId + '/' + ch.folder + '/';
-        totalPagesFound = 0;
-        let stopScan = false;
+        const formats = ['jpg', 'png', 'webp', 'jpeg', 'bmp'];
+        const maxPages = 200;
 
-        // Scan maksimal 200 halaman
-        async function scanAll() {
-          const imageList = [];
-          for (let i = 1; i <= 200; i++) {
-            if (stopScan) break;
-            const src = await fastScanPage(base, i);
-            if (src) {
-              imageList.push(src);
-            } else {
-              // Kalau halaman 1 tidak ada, langsung stop
-              if (i === 1) {
-                stopScan = true;
-              }
-              // Kalau ada gap di tengah (misal 5 gagal, 6 ada), stop aja biar aman
-              break;
+        let loadedCount = 0;
+
+        function pad(n) { return String(n).padStart(2, '0'); }
+
+        function tryLoadPage(pageNum) {
+          if (pageNum > maxPages) {
+            if (loadedCount === 0) {
+              pagesEl.innerHTML = '<div class="empty">Tidak ada gambar di folder ini.</div>';
             }
-          }
-          return imageList;
-        }
-
-        scanAll().then(imageList => {
-          if (imageList.length === 0) {
-            pagesEl.innerHTML = '<div class="empty">Tidak ada gambar di folder ini.</div>';
             return;
           }
 
-          totalPagesFound = imageList.length;
-          indicator.textContent = '1 / ' + totalPagesFound;
-
-          // Render per 40 halaman
-          const batchSize = 40;
-          let currentBatch = 0;
-          pagesEl.innerHTML = '';
-
-          function renderBatch() {
-            const start = currentBatch * batchSize;
-            const end = Math.min(start + batchSize, imageList.length);
-            
-            for (let i = start; i < end; i++) {
-              const img = document.createElement('img');
-              img.src = imageList[i];
-              img.loading = 'eager';
-              img.decoding = 'async';
-              img.alt = 'Page ' + (i + 1);
-              img.style.display = 'block';
-              img.style.width = '100%';
-              img.style.height = 'auto';
+          let attempt = 0;
+          const img = new Image();
+          const tryFormat = () => {
+            if (attempt >= formats.length) return;
+            img.onload = function() {
               pagesEl.appendChild(img);
+              loadedCount++;
+              tryLoadPage(pageNum + 1);
+            };
+            img.onerror = function() {
+              attempt++;
+              tryFormat();
+            };
+            img.src = base + pad(pageNum) + '.' + formats[attempt];
+          };
+          tryFormat();
+        }
+
+        tryLoadPage(1);
+        totalPages = loadedCount;
+
+        // Simpan progress
+        try {
+          localStorage.setItem('gitmanhwa_progress_' + seriesId, JSON.stringify({
+            chapter: ch.folder,
+            scrollY: 0
+          }));
+        } catch(e) {}
+
+        updateNav();
+      }
+
+      // ===== RENDER CHAPTER LIST DI MODAL =====
+      function renderChapterList() {
+        if (!chapterListContainer) return;
+        
+        chapterListContainer.innerHTML = chapters.map((c, i) => `
+          <div class="chapter-list-item" data-index="${i}">
+            Chapter ${c.num}
+          </div>
+        `).join('');
+
+        // Klik chapter
+        chapterListContainer.querySelectorAll('.chapter-list-item').forEach(item => {
+          item.addEventListener('click', function() {
+            const idx = parseInt(this.dataset.index);
+            if (idx !== currentIndex) {
+              currentIndex = idx;
+              const ch = chapters[currentIndex];
+              history.pushState(null, '', 'reader.html?series=' + seriesId + '&chapter=' + ch.folder);
+              loadChapter(currentIndex);
+              window.scrollTo(0, 0);
+              chapterListModal.classList.remove('show');
             }
-
-            currentBatch++;
-
-            // Kalau masih ada batch berikutnya, render lagi setelah sedikit delay (biar UI nggak freeze)
-            if (currentBatch * batchSize < imageList.length) {
-              setTimeout(renderBatch, 50);
-            } else {
-              // Semua sudah dirender, update total
-              indicator.textContent = '1 / ' + totalPagesFound;
-              // Scroll ke posisi tersimpan
-              try {
-                const saved = localStorage.getItem('gitmanhwa_progress_' + seriesId);
-                if (saved) {
-                  const data = JSON.parse(saved);
-                  if (data.scrollY) window.scrollTo(0, data.scrollY);
-                }
-              } catch(e) {}
-            }
-          }
-
-          renderBatch();
-
-          // Simpan progress
-          try {
-            localStorage.setItem('gitmanhwa_progress_' + seriesId, JSON.stringify({
-              chapter: ch.folder,
-              scrollY: 0
-            }));
-          } catch(e) {}
+          });
         });
       }
 
-      // ===== UPDATE INDICATOR SAAT SCROLL =====
-      let scrollTimer;
-      window.addEventListener('scroll', function() {
-        clearTimeout(scrollTimer);
-        scrollTimer = setTimeout(() => {
-          const imgs = pagesEl.querySelectorAll('img');
-          const currentY = window.scrollY;
-          let activeIndex = 1;
-          for (let i = 0; i < imgs.length; i++) {
-            const imgTop = imgs[i].offsetTop;
-            const imgBottom = imgTop + imgs[i].offsetHeight;
-            if (currentY >= imgTop - 100 && currentY < imgBottom - 100) {
-              activeIndex = i + 1;
-              break;
-            }
-          }
-          if (totalPagesFound > 0) {
-            indicator.textContent = activeIndex + ' / ' + totalPagesFound;
-          }
-
-          // Simpan scroll progress
-          try {
-            const progress = {
-              chapter: chapters[currentIndex]?.folder || '',
-              scrollY: currentY
-            };
-            localStorage.setItem('gitmanhwa_progress_' + seriesId, JSON.stringify(progress));
-          } catch(e) {}
-        }, 200);
+      // ===== OVERLAY BUTTONS =====
+      // Settings
+      settingsBtn.addEventListener('click', () => {
+        settingsModal.classList.add('show');
       });
 
-      // ===== NAVIGASI CHAPTER =====
+      closeSettings.addEventListener('click', () => {
+        settingsModal.classList.remove('show');
+      });
+
+      laterSettings.addEventListener('click', () => {
+        settingsModal.classList.remove('show');
+      });
+
+      saveSettings.addEventListener('click', () => {
+        autoScrollSpeed = parseFloat(speedSlider.value);
+        // Simpan settings
+        localStorage.setItem('gitmanhwa_settings', JSON.stringify({
+          speed: autoScrollSpeed,
+          quality: qualitySelect.value
+        }));
+        settingsModal.classList.remove('show');
+        Toast.show('Pengaturan disimpan!', 'success');
+      });
+
+      // Load saved settings
+      const savedSettings = localStorage.getItem('gitmanhwa_settings');
+      if (savedSettings) {
+        const settings = JSON.parse(savedSettings);
+        autoScrollSpeed = settings.speed || 1.0;
+        speedSlider.value = autoScrollSpeed;
+        qualitySelect.value = settings.quality || 'auto';
+      }
+
+      // Play/Pause Autoscroll
+      playPauseBtn.addEventListener('click', () => {
+        if (isAutoScroll) {
+          stopAutoScroll();
+        } else {
+          startAutoScroll();
+        }
+      });
+
+      function startAutoScroll() {
+        isAutoScroll = true;
+        playIcon.textContent = '⏸️';
+        playPauseBtn.classList.add('active');
+        
+        // Interval scroll berdasarkan kecepatan
+        const baseSpeed = 50; // px per tick
+        const interval = 1000 / (autoScrollSpeed * 10); // kecepatan dinamis
+        
+        autoScrollInterval = setInterval(() => {
+          const scrollAmount = baseSpeed * autoScrollSpeed;
+          window.scrollBy(0, scrollAmount);
+          
+          // Berhenti di bawah
+          if (window.innerHeight + window.scrollY >= document.body.scrollHeight - 10) {
+            stopAutoScroll();
+          }
+        }, interval);
+      }
+
+      function stopAutoScroll() {
+        isAutoScroll = false;
+        playIcon.textContent = '▶️';
+        playPauseBtn.classList.remove('active');
+        if (autoScrollInterval) {
+          clearInterval(autoScrollInterval);
+          autoScrollInterval = null;
+        }
+      }
+
+      // Chapter List Modal
+      chapterListBtn.addEventListener('click', () => {
+        chapterListModal.classList.add('show');
+        chapterSearchInput.value = '';
+        chapterSearchInput.focus();
+        renderChapterList();
+      });
+
+      closeChapterList.addEventListener('click', () => {
+        chapterListModal.classList.remove('show');
+      });
+
+      // Search chapter
+      chapterSearchInput.addEventListener('input', function() {
+        const q = this.value.toLowerCase().trim();
+        const items = chapterListContainer.querySelectorAll('.chapter-list-item');
+        items.forEach(item => {
+          const text = item.textContent.toLowerCase();
+          if (text.includes(q)) {
+            item.style.display = 'block';
+          } else {
+            item.style.display = 'none';
+          }
+        });
+      });
+
+      // Scroll ke bawah
+      scrollToBottomBtn.addEventListener('click', () => {
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+      });
+
+      // ===== NAVIGASI =====
       function updateNav() {
         indicator.textContent = (currentIndex + 1) + ' / ' + chapters.length;
         prevBtn.disabled = currentIndex === chapters.length - 1;
@@ -263,8 +395,8 @@
           currentIndex++;
           const ch = chapters[currentIndex];
           history.pushState(null, '', 'reader.html?series=' + seriesId + '&chapter=' + ch.folder);
+          stopAutoScroll();
           loadChapter(currentIndex);
-          updateNav();
           window.scrollTo(0, 0);
         }
       });
@@ -274,8 +406,8 @@
           currentIndex--;
           const ch = chapters[currentIndex];
           history.pushState(null, '', 'reader.html?series=' + seriesId + '&chapter=' + ch.folder);
+          stopAutoScroll();
           loadChapter(currentIndex);
-          updateNav();
           window.scrollTo(0, 0);
         }
       });
@@ -285,6 +417,22 @@
         if (e.key === 'ArrowLeft') newPrev.click();
         if (e.key === 'ArrowRight') newNext.click();
       });
+
+      // ===== TOAST (Simple) =====
+      const Toast = {
+        show(message, type = 'info') {
+          let toast = document.querySelector('.toast');
+          if (!toast) {
+            toast = document.createElement('div');
+            toast.className = 'toast';
+            document.body.appendChild(toast);
+          }
+          toast.textContent = message;
+          toast.className = 'toast toast-' + type;
+          toast.style.display = 'block';
+          setTimeout(() => toast.style.display = 'none', 3000);
+        }
+      };
 
       updateNav();
     })();
