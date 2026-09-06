@@ -144,13 +144,9 @@
 
       let chapters = [];
       let currentIndex = -1;
-      let totalPages = 0;
       let isAutoScroll = false;
       let animationId = null;
       let lastTime = 0;
-      let accumulatedScroll = 0;
-
-      // Kecepatan default: 60 px/detik (bisa diubah user)
       let autoScrollSpeed = 60;
 
       backBtn.addEventListener('click', function(e) {
@@ -164,12 +160,14 @@
         .then(data => {
           const seriesData = data.find(s => s.id === seriesId);
           if (!seriesData) throw new Error('Series tidak ditemukan');
-          chapters = seriesData.chapters.sort((a,b) => b.num - a.num);
+          
+          chapters = seriesData.chapters.sort((a, b) => b.num - a.num);
           currentIndex = chapters.findIndex(c => c.folder === chapterFolder);
           if (currentIndex === -1) currentIndex = 0;
 
           titleEl.textContent = seriesData.title;
 
+          // Isi dropdown chapter
           chapterSelect.innerHTML = '';
           chapters.forEach((c, i) => {
             const opt = document.createElement('option');
@@ -192,14 +190,13 @@
           });
 
           renderChapterList();
-
           loadChapter(currentIndex);
         })
         .catch(err => {
           pagesEl.innerHTML = `<div class="empty">Error: ${err.message}</div>`;
         });
 
-      // ===== LOAD CHAPTER (PARALEL PROBING - 5-6x LEBIH CEPAT) =====
+      // ===== LOAD CHAPTER (FIXED - Sequential format, no race condition) =====
       function loadChapter(index) {
         const ch = chapters[index];
         if (!ch) return;
@@ -207,63 +204,69 @@
         stopAutoScroll();
         pagesEl.innerHTML = '<div class="empty">Memuat gambar...</div>';
         const base = 'series/' + seriesId + '/' + ch.folder + '/';
-        
-        // FORMAT FAVORIT: webp & jpg dicari BERSAMAAN (paralel)
-        // Setting ini bikin pencarian 5-6x lebih cepat dari sequential
-        const formats = ['webp', 'jpg', 'png', 'jpeg', 'bmp']; 
 
-        function pad(n) { return String(n).padStart(2, '0'); }
+        // Prioritas: webp dulu, baru jpg/png
+        const formats = ['webp', 'jpg', 'png', 'jpeg'];
 
-        // Cari gambar dengan PARALEL: coba SEMUA format dalam satu waktu
+        function pad(n) {
+          return String(n).padStart(2, '0');
+        }
+
         function tryLoadPage(pageNum) {
-          if (pageNum > 200) return;
-          
+          if (pageNum > 200) {
+            if (pagesEl.querySelectorAll('img').length === 0) {
+              pagesEl.innerHTML = '<div class="empty">Tidak ada gambar di chapter ini</div>';
+            }
+            return;
+          }
+
           const padNum = pad(pageNum);
-          let found = false;
 
-          // Loop semua format sekaligus (nggak nunggu satu-satu)
-          formats.forEach(format => {
-            const img = new Image();
+          function tryNextFormat(formatIndex) {
+            if (formatIndex >= formats.length) {
+              // Semua format gagal untuk halaman ini
+              if (pageNum === 1) {
+                pagesEl.innerHTML = '<div class="empty">Tidak ada gambar<br>Cek nama file: 01.webp / 01.jpg</div>';
+              }
+              return;
+            }
+
+            const format = formats[formatIndex];
             const src = base + padNum + '.' + format;
+            const img = new Image();
 
-            // Kalau ketemu, langsung render & stop cari format lain
-            img.onload = () => {
-              if (found) return;
-              found = true;
-
+            img.onload = function () {
+              // Berhasil → tampilkan & lanjut halaman berikutnya
               const newImg = document.createElement('img');
               newImg.src = src;
               newImg.loading = 'eager';
               newImg.decoding = 'async';
               newImg.alt = 'Page ' + pageNum;
-              
-              // Progressive blur (biar nggak nunggu lama)
-              newImg.style.filter = 'blur(10px)';
-              newImg.style.opacity = '0.5';
-              newImg.style.transition = 'filter 0.5s ease, opacity 0.5s ease';
               newImg.style.width = '100%';
               newImg.style.height = 'auto';
               newImg.style.display = 'block';
-              
-              newImg.onload = () => {
-                newImg.style.filter = 'blur(0)';
-                newImg.style.opacity = '1';
-              };
-              
-              pagesEl.appendChild(newImg);
-              
-              // Update indicator total halaman
-              const totalImgs = pagesEl.querySelectorAll('img').length;
-              indicator.textContent = '1 / ' + Math.max(totalImgs, 1);
 
-              // Lanjut ke halaman berikutnya (dengan delay 50ms biar nggak overload)
-              setTimeout(() => tryLoadPage(pageNum + 1), 50);
+              if (pageNum === 1) pagesEl.innerHTML = '';
+              pagesEl.appendChild(newImg);
+
+              // Update indicator
+              const totalImgs = pagesEl.querySelectorAll('img').length;
+              indicator.textContent = totalImgs + ' halaman';
+
+              // Lanjut ke halaman berikutnya
+              setTimeout(() => tryLoadPage(pageNum + 1), 30);
             };
 
-            // Gagal di format ini, biarkan format lain yang nyoba
-            img.onerror = () => {};
+            img.onerror = function () {
+              // Gagal → coba format berikutnya
+              tryNextFormat(formatIndex + 1);
+            };
+
             img.src = src;
-          });
+          }
+
+          // Mulai dari format pertama (webp)
+          tryNextFormat(0);
         }
 
         // Mulai dari halaman 1
@@ -275,7 +278,7 @@
             chapter: ch.folder,
             scrollY: 0
           }));
-        } catch(e) {}
+        } catch (e) {}
 
         updateNav();
       }
@@ -305,7 +308,7 @@
         });
       }
 
-      // ===== AUTOSCROLL SMOOTH (requestAnimationFrame) =====
+      // ===== AUTOSCROLL =====
       function startAutoScroll() {
         if (isAutoScroll) return;
         
@@ -314,20 +317,16 @@
         playPauseBtn.classList.add('active');
         
         lastTime = performance.now();
-        accumulatedScroll = 0;
         
         function scrollStep(currentTime) {
           if (!isAutoScroll) return;
           
-          const deltaTime = (currentTime - lastTime) / 1000; // detik
+          const deltaTime = (currentTime - lastTime) / 1000;
           lastTime = currentTime;
           
-          // Kecepatan dalam px/detik × waktu berjalan (detik)
           const scrollAmount = autoScrollSpeed * deltaTime;
-          
           window.scrollBy(0, scrollAmount);
           
-          // Stop kalau sudah di bawah
           if (window.innerHeight + window.scrollY >= document.body.scrollHeight - 10) {
             stopAutoScroll();
             return;
@@ -465,7 +464,7 @@
         if (e.key === 'ArrowRight') newNext.click();
       });
 
-      // ===== TOAST (Simple) =====
+      // ===== TOAST =====
       function showToast(message) {
         let toast = document.querySelector('.toast');
         if (!toast) {
