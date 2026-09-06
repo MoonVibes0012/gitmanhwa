@@ -144,11 +144,9 @@
 
       let chapters = [];
       let currentIndex = -1;
-      let totalPages = 0;
       let isAutoScroll = false;
       let animationId = null;
       let lastTime = 0;
-      let accumulatedScroll = 0;
 
       // Kecepatan default: 60 px/detik (bisa diubah user)
       let autoScrollSpeed = 60;
@@ -199,57 +197,119 @@
           pagesEl.innerHTML = `<div class="empty">Error: ${err.message}</div>`;
         });
 
-      // ===== LOAD CHAPTER =====
+      // ===== LOAD CHAPTER (ANTI LAG) =====
       function loadChapter(index) {
         const ch = chapters[index];
         if (!ch) return;
 
         stopAutoScroll();
-        pagesEl.innerHTML = '';
+        pagesEl.innerHTML = '<div class="empty">Memuat gambar...</div>';
         const base = 'series/' + seriesId + '/' + ch.folder + '/';
         const formats = ['jpg', 'png', 'webp', 'jpeg', 'bmp'];
-        const maxPages = 200;
 
-        let loadedCount = 0;
+        // GUARD: timeout 5 detik per gambar, biar nggak stuck
+        const TIMEOUT_MS = 5000;
 
         function pad(n) { return String(n).padStart(2, '0'); }
 
-        function tryLoadPage(pageNum) {
-          if (pageNum > maxPages) {
-            if (loadedCount === 0) {
-              pagesEl.innerHTML = '<div class="empty">Tidak ada gambar di folder ini.</div>';
+        // Scan cepat untuk hitung total halaman
+        async function scanPages() {
+          const found = [];
+          
+          for (let i = 1; i <= 200; i++) {
+            let loaded = false;
+            
+            for (const format of formats) {
+              const src = base + pad(i) + '.' + format;
+              try {
+                const result = await loadImage(src, TIMEOUT_MS);
+                if (result) {
+                  found.push(src);
+                  loaded = true;
+                  break;
+                }
+              } catch (e) {
+                // timeout atau error, lanjut ke format berikutnya
+              }
             }
+            
+            // Kalau halaman 1 kosong atau ada gap, stop
+            if (!loaded) {
+              if (i === 1) break; // kosong total
+              break; // ada gap, stop
+            }
+          }
+          
+          return found;
+        }
+
+        // Helper: load gambar dengan timeout
+        function loadImage(src, timeoutMs) {
+          return new Promise((resolve) => {
+            let isResolved = false;
+            const img = new Image();
+            const timer = setTimeout(() => {
+              if (!isResolved) {
+                isResolved = true;
+                resolve(null);
+              }
+            }, timeoutMs);
+
+            img.onload = function() {
+              if (!isResolved) {
+                isResolved = true;
+                clearTimeout(timer);
+                resolve(src);
+              }
+            };
+            
+            img.onerror = function() {
+              if (!isResolved) {
+                isResolved = true;
+                clearTimeout(timer);
+                resolve(null);
+              }
+            };
+            
+            img.src = src;
+          });
+        }
+
+        // Render semua gambar sekaligus
+        async function renderAllImages() {
+          const imageList = await scanPages();
+          
+          if (imageList.length === 0) {
+            pagesEl.innerHTML = '<div class="empty">Tidak ada gambar di folder ini.</div>';
             return;
           }
 
-          let attempt = 0;
-          const img = new Image();
-          const tryFormat = () => {
-            if (attempt >= formats.length) return;
-            img.onload = function() {
-              pagesEl.appendChild(img);
-              loadedCount++;
-              tryLoadPage(pageNum + 1);
-            };
-            img.onerror = function() {
-              attempt++;
-              tryFormat();
-            };
-            img.src = base + pad(pageNum) + '.' + formats[attempt];
-          };
-          tryFormat();
+          // Hitung total & update indicator
+          indicator.textContent = '1 / ' + imageList.length;
+
+          pagesEl.innerHTML = '';
+          imageList.forEach((src, idx) => {
+            const img = document.createElement('img');
+            img.src = src;
+            img.loading = 'eager';
+            img.decoding = 'async';
+            img.alt = 'Page ' + (idx + 1);
+            img.style.display = 'block';
+            img.style.width = '100%';
+            img.style.height = 'auto';
+            pagesEl.appendChild(img);
+          });
+
+          // Simpan progress
+          try {
+            localStorage.setItem('gitmanhwa_progress_' + seriesId, JSON.stringify({
+              chapter: ch.folder,
+              scrollY: 0
+            }));
+          } catch(e) {}
         }
 
-        tryLoadPage(1);
-        totalPages = loadedCount;
-
-        try {
-          localStorage.setItem('gitmanhwa_progress_' + seriesId, JSON.stringify({
-            chapter: ch.folder,
-            scrollY: 0
-          }));
-        } catch(e) {}
-
+        renderAllImages();
         updateNav();
       }
 
@@ -287,20 +347,16 @@
         playPauseBtn.classList.add('active');
         
         lastTime = performance.now();
-        accumulatedScroll = 0;
         
         function scrollStep(currentTime) {
           if (!isAutoScroll) return;
           
-          const deltaTime = (currentTime - lastTime) / 1000; // detik
+          const deltaTime = (currentTime - lastTime) / 1000;
           lastTime = currentTime;
           
-          // Kecepatan dalam px/detik × waktu berjalan (detik)
           const scrollAmount = autoScrollSpeed * deltaTime;
-          
           window.scrollBy(0, scrollAmount);
           
-          // Stop kalau sudah di bawah
           if (window.innerHeight + window.scrollY >= document.body.scrollHeight - 10) {
             stopAutoScroll();
             return;
