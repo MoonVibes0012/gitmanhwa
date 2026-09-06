@@ -15,9 +15,9 @@
         <div class="logo-icon">🦈</div>
         <span>GITMANHWA</span>
       </a>
-      <nav class="nav-menu">
-        <a href="index.html">Beranda</a>
-        <a href="index.html?tab=all">Daftar Series</a>
+      <nav class="nav-menu" style="display:flex;gap:12px;">
+        <a href="index.html" style="color:var(--text);text-decoration:none;font-size:14px;">Beranda</a>
+        <a href="index.html?tab=all" style="color:var(--text);text-decoration:none;font-size:14px;">Daftar Series</a>
       </nav>
     </div>
   </header>
@@ -27,6 +27,7 @@
     <div class="empty">Loading...</div>
   </div>
 
+  <script src="js/features.js"></script>
   <script>
     (function() {
       // Blokir copy
@@ -47,15 +48,23 @@
             return;
           }
 
-          const sorted = series.chapters.sort((a,b) => b.num - a.num);
+          // Urutkan chapter dari besar ke kecil
+          const sorted = [...series.chapters].sort((a, b) => b.num - a.num);
 
+          // Cover
           let coverHtml = '';
           if (series.cover) {
-            coverHtml = `<img src="${series.cover}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`;
+            coverHtml = `<img src="\( {series.cover}" alt=" \){series.title}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`;
           }
-          const fallback = `<div class="cover-fallback" style="display:${series.cover ? 'none' : 'flex'}">${series.title.charAt(0)}</div>`;
+          const fallback = `<div class="cover-fallback" style="display:\( {series.cover ? 'none' : 'flex'}"> \){series.title.charAt(0)}</div>`;
 
-          const genreHtml = series.genre ? series.genre.map(g => `<span class="genre-tag">${g}</span>`).join('') : '';
+          // Genre tags
+          const genreHtml = series.genre 
+            ? series.genre.map(g => `<span class="genre-tag">${g}</span>`).join('') 
+            : '';
+
+          // Status class
+          const statusClass = series.status === 'Ongoing' ? 'ongoing' : 'completed';
 
           container.innerHTML = `
             <div class="series-detail-container">
@@ -69,20 +78,35 @@
                   <div class="meta">
                     <span>${series.flag || '🏳️'}</span>
                     <span>${series.type || 'Manhwa'}</span>
-                    <span class="status ${series.status === 'Ongoing' ? 'ongoing' : 'completed'}">${series.status || 'Ongoing'}</span>
+                    <span class="status \( {statusClass}"> \){series.status || 'Ongoing'}</span>
                   </div>
                   ${series.author ? `<div class="author">✏️ ${series.author}</div>` : ''}
                   ${series.rating ? `<div class="rating">⭐ ${series.rating}</div>` : ''}
                   <div class="genre-list">${genreHtml}</div>
-                  ${series.synopsis ? `<div class="synopsis">${series.synopsis}</div>` : ''}
+                  \( {series.synopsis ? `<div class="synopsis"> \){series.synopsis}</div>` : ''}
+
+                  <!-- Tombol Bookmark -->
+                  <button id="bookmarkBtn" style="
+                    margin-top: 14px;
+                    padding: 10px 18px;
+                    border-radius: 8px;
+                    border: 1px solid var(--border);
+                    background: var(--card);
+                    color: var(--text);
+                    font-size: 14px;
+                    font-weight: 600;
+                    cursor: pointer;
+                  ">
+                    🤍 Bookmark
+                  </button>
                 </div>
               </div>
 
               <div class="section">
-                <h3 class="section-title">Daftar Chapter</h3>
+                <h3 class="section-title">Daftar Chapter (${sorted.length})</h3>
                 <div class="chapter-grid">
                   ${sorted.map(c => `
-                    <a class="chapter-btn" href="reader.html?series=${series.id}&chapter=${c.folder}">
+                    <a class="chapter-btn" href="reader.html?series=\( {series.id}&chapter= \){c.folder}">
                       Chapter ${c.num}
                     </a>
                   `).join('')}
@@ -90,6 +114,42 @@
               </div>
             </div>
           `;
+
+          // ===== Bookmark Logic =====
+          const bookmarkBtn = document.getElementById('bookmarkBtn');
+          if (bookmarkBtn && typeof Bookmark !== 'undefined') {
+            function updateBookmarkButton() {
+              if (Bookmark.exists(series.id)) {
+                bookmarkBtn.innerHTML = '❤️ Bookmarked';
+                bookmarkBtn.style.background = 'var(--accent)';
+                bookmarkBtn.style.color = '#fff';
+                bookmarkBtn.style.borderColor = 'var(--accent)';
+              } else {
+                bookmarkBtn.innerHTML = '🤍 Bookmark';
+                bookmarkBtn.style.background = 'var(--card)';
+                bookmarkBtn.style.color = 'var(--text)';
+                bookmarkBtn.style.borderColor = 'var(--border)';
+              }
+            }
+
+            updateBookmarkButton();
+
+            bookmarkBtn.addEventListener('click', function() {
+              const isBookmarked = Bookmark.toggle(series.id);
+              updateBookmarkButton();
+              
+              // Toast sederhana
+              const toast = document.createElement('div');
+              toast.textContent = isBookmarked ? 'Ditambahkan ke Bookmark' : 'Dihapus dari Bookmark';
+              toast.style.cssText = `
+                position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+                background: var(--accent); color: white; padding: 12px 20px;
+                border-radius: 8px; font-size: 14px; z-index: 9999;
+              `;
+              document.body.appendChild(toast);
+              setTimeout(() => toast.remove(), 2000);
+            });
+          }
         })
         .catch(err => {
           container.innerHTML = `<div class="empty">Gagal load data: ${err.message}</div>`;
