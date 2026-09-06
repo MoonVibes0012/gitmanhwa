@@ -31,7 +31,6 @@ function showSkeleton() {
   }
 }
 
-// Panggil skeleton saat halaman dimuat
 showSkeleton();
 
 // ===== LOAD DATA =====
@@ -60,14 +59,12 @@ function renderAll() {
   const exploreContent = document.getElementById('exploreContent');
 
   if (tab === 'explore') {
-    // Tampilkan Explore, sembunyikan Home
-    defaultContent.style.display = 'none';
-    exploreContent.style.display = 'block';
+    if (defaultContent) defaultContent.style.display = 'none';
+    if (exploreContent) exploreContent.style.display = 'block';
     renderExplorePage();
   } else {
-    // Tampilkan Home, sembunyikan Explore
-    defaultContent.style.display = 'block';
-    exploreContent.style.display = 'none';
+    if (defaultContent) defaultContent.style.display = 'block';
+    if (exploreContent) exploreContent.style.display = 'none';
     renderHomePage(tab);
   }
 
@@ -79,6 +76,7 @@ function renderHomePage(tab) {
   renderSlider();
   renderAnnouncement();
   renderSeriesGrid(tab, genre, document.getElementById('seriesGrid'));
+  renderContinueReading();
   renderUpdates();
   updateSeriesCount();
 }
@@ -99,10 +97,10 @@ function renderSlider() {
     const coverHtml = s.cover
       ? `<img src="${s.cover}" class="slide-cover" loading="lazy" decoding="async" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
       : '';
-    const fallbackHtml = `<div class="slide-cover-fallback" style="display:${s.cover ? 'none' : 'flex'}">${s.title.charAt(0)}</div>`;
+    const fallbackHtml = `<div class="slide-cover-fallback" style="display:\( {s.cover ? 'none' : 'flex'}"> \){s.title.charAt(0)}</div>`;
 
     return `
-      <div class="slide ${i === 0 ? 'active' : ''}" data-index="${i}">
+      <div class="slide \( {i === 0 ? 'active' : ''}" data-index=" \){i}">
         ${coverHtml}
         ${fallbackHtml}
         <div class="slide-info">
@@ -115,15 +113,17 @@ function renderSlider() {
     `;
   }).join('');
 
-  dotsContainer.innerHTML = slides.map((_, i) => `
-    <span class="dot ${i === 0 ? 'active' : ''}" data-index="${i}"></span>
-  `).join('');
+  if (dotsContainer) {
+    dotsContainer.innerHTML = slides.map((_, i) => `
+      <span class="dot \( {i === 0 ? 'active' : ''}" data-index=" \){i}"></span>
+    `).join('');
 
-  dotsContainer.querySelectorAll('.dot').forEach(dot => {
-    dot.addEventListener('click', function() {
-      goToSlide(parseInt(this.dataset.index));
+    dotsContainer.querySelectorAll('.dot').forEach(dot => {
+      dot.addEventListener('click', function() {
+        goToSlide(parseInt(this.dataset.index));
+      });
     });
-  });
+  }
 
   clearInterval(slideInterval);
   slideInterval = setInterval(() => {
@@ -138,7 +138,7 @@ function goToSlide(index) {
   slides.forEach(s => s.classList.remove('active'));
   dots.forEach(d => d.classList.remove('active'));
   slides[index].classList.add('active');
-  dots[index].classList.add('active');
+  if (dots[index]) dots[index].classList.add('active');
   currentSlide = index;
 }
 
@@ -152,6 +152,54 @@ function renderAnnouncement() {
   }
 }
 
+// ===== CONTINUE READING =====
+function renderContinueReading() {
+  const container = document.getElementById('continueReading');
+  if (!container) return;
+
+  // Pastikan Progress tersedia
+  if (typeof Progress === 'undefined') {
+    container.innerHTML = `<div class="empty">Belum ada riwayat baca</div>`;
+    return;
+  }
+
+  const history = Progress.getAll();
+  if (history.length === 0) {
+    container.innerHTML = `<div class="empty">Belum ada riwayat baca</div>`;
+    return;
+  }
+
+  const items = history.map(h => {
+    const series = SERIES.find(s => s.id === h.id);
+    if (!series) return null;
+    return { series, progress: h.progress };
+  }).filter(Boolean);
+
+  if (items.length === 0) {
+    container.innerHTML = `<div class="empty">Belum ada riwayat baca</div>`;
+    return;
+  }
+
+  container.innerHTML = items.map(item => {
+    const chNum = item.progress.chapter ? item.progress.chapter.replace('chapter-', '') : '?';
+    return `
+      <a href="reader.html?series=\( {item.series.id}&chapter= \){item.progress.chapter}" class="update-item">
+        <div class="update-cover">
+          <img src="\( {item.series.cover || ''}" alt=" \){item.series.title}" 
+               style="width:100%;height:100%;object-fit:cover;border-radius:6px"
+               onerror="this.style.display='none'">
+        </div>
+        <div class="update-info">
+          <div class="update-title">${item.series.title}</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:4px;">
+            Lanjut Chapter ${chNum}
+          </div>
+        </div>
+      </a>
+    `;
+  }).join('');
+}
+
 // ===== SERIES GRID =====
 function renderSeriesGrid(tab = 'home', genre = 'all', targetGrid) {
   const grid = targetGrid || document.getElementById('seriesGrid');
@@ -163,8 +211,6 @@ function renderSeriesGrid(tab = 'home', genre = 'all', targetGrid) {
     filtered = filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0));
   } else if (tab === 'selesai' || tab === 'library') {
     filtered = filtered.filter(s => s.status === 'Completed' || s.status === 'Selesai');
-  } else if (tab === 'all') {
-    // semua series
   }
 
   if (genre !== 'all') {
@@ -181,7 +227,8 @@ function renderSeriesGrid(tab = 'home', genre = 'all', targetGrid) {
   grid.innerHTML = filtered.map(s => `
     <a href="series.html?id=${s.id}" class="series-card">
       <div class="series-cover">
-        <img src="${s.cover || ''}" alt="${s.title}" loading="lazy" decoding="async" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+        <img src="\( {s.cover || ''}" alt=" \){s.title}" loading="lazy" decoding="async" 
+             onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
         <div class="cover-fallback" style="display:none">${s.title.charAt(0)}</div>
         <span class="flag">${s.flag || ''}</span>
       </div>
@@ -199,16 +246,16 @@ function renderSeriesGrid(tab = 'home', genre = 'all', targetGrid) {
 function updateSeriesCount() {
   const el = document.getElementById('seriesCount');
   if (!el) return;
-  const visible = document.querySelectorAll('.series-card').length;
+  const visible = document.querySelectorAll('#seriesGrid .series-card').length;
   el.textContent = visible + ' series';
 }
 
-// ===== UPDATES (Dengan Waktu Real) =====
+// ===== UPDATES =====
 function renderUpdates() {
   const list = document.getElementById('updateList');
   if (!list) return;
 
-  const hasData = SERIES.filter(s => s.chapters.length);
+  const hasData = SERIES.filter(s => s.chapters && s.chapters.length);
   if (hasData.length === 0) {
     list.innerHTML = `<div class="empty">Belum ada update</div>`;
     return;
@@ -222,18 +269,21 @@ function renderUpdates() {
 
   list.innerHTML = sorted.map(s => {
     const latest = [...s.chapters].sort((a, b) => b.num - a.num).slice(0, 3);
+    
     const chaptersHtml = latest.map(c => `
-      <a href="reader.html?series=${s.id}&chapter=${c.folder}" class="chapter-row">
+      <a href="reader.html?series=\( {s.id}&chapter= \){c.folder}" class="chapter-row">
         <span class="chapter-name">Chapter ${c.num}</span>
-        <span class="chapter-time" data-timestamp="${c.timestamp || ''}">${c.timestamp ? Format.timeAgo(c.timestamp) : 'baru'}</span>
+        <span class="chapter-time">${c.timestamp ? (typeof Format !== 'undefined' ? Format.timeAgo(c.timestamp) : 'baru') : 'baru'}</span>
       </a>
     `).join('');
 
-    const genreTags = s.genre ? s.genre.slice(0, 2).map(g => `<span class="genre-tag">${g}</span>`).join('') : '';
+    const genreTags = s.genre 
+      ? s.genre.slice(0, 2).map(g => `<span class="genre-tag">${g}</span>`).join('') 
+      : '';
 
     const coverImg = s.cover
       ? `<img src="${s.cover}" loading="lazy" decoding="async" onerror="this.style.display='none'">`
-      : `<div class="cover-placeholder" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#2a2a3e,#1a1a2e);color:#555;font-size:20px;font-weight:bold;">${s.title.charAt(0)}</div>`;
+      : `<div class="cover-placeholder">${s.title.charAt(0)}</div>`;
 
     return `
       <div class="update-item" data-href="series.html?id=${s.id}">
@@ -252,6 +302,7 @@ function renderUpdates() {
     `;
   }).join('');
 
+  // Klik item (kecuali link chapter)
   list.querySelectorAll('.update-item').forEach(item => {
     item.addEventListener('click', function(e) {
       if (e.target.closest('.chapter-row')) return;
@@ -271,8 +322,7 @@ function renderExplorePage() {
 
   if (!heroBanner || !horizontalScroll || !exploreGrid) return;
 
-  // Urutkan berdasarkan rating untuk Hero
-  const sorted = [...SERIES].sort((a,b) => (b.rating || 0) - (a.rating || 0));
+  const sorted = [...SERIES].sort((a, b) => (b.rating || 0) - (a.rating || 0));
   const hero = sorted[0];
 
   // 1. Hero Banner
@@ -284,7 +334,7 @@ function renderExplorePage() {
           <h2>${hero.title}</h2>
           <p>${hero.synopsis || ''}</p>
           <div class="tags">
-            ${(hero.genre || []).slice(0,2).map(g => `<span class="tag">${g}</span>`).join('')}
+            \( {(hero.genre || []).slice(0, 2).map(g => `<span class="tag"> \){g}</span>`).join('')}
           </div>
         </div>
       </a>
@@ -301,22 +351,18 @@ function renderExplorePage() {
     </a>
   `).join('');
 
-  // 3. Grid Utama Explore
+  // 3. Grid Utama
   renderSeriesGrid('all', 'all', exploreGrid);
 
   // 4. Lanjut Baca
-  let hasHistory = false;
-  SERIES.forEach(s => {
-    if (Progress.exists(s.id)) hasHistory = true;
-  });
-
-  if (hasHistory) {
-    continueEmpty.innerHTML = "Ada riwayat baca!";
-  } else {
-    continueEmpty.innerHTML = "Belum ada Data<br><br>Kamu belum punya riwayat baca";
+  if (continueEmpty) {
+    const hasHistory = typeof Progress !== 'undefined' && Progress.getAll().length > 0;
+    continueEmpty.innerHTML = hasHistory 
+      ? 'Ada riwayat baca!' 
+      : 'Belum ada Data<br><br>Kamu belum punya riwayat baca';
   }
 
-  // 5. Tab Rekomendasi / Pilihan Admin
+  // 5. Tabs
   const tabs = document.querySelectorAll('.explore-tab');
   tabs.forEach(tab => {
     tab.addEventListener('click', function() {
@@ -324,24 +370,25 @@ function renderExplorePage() {
       this.classList.add('active');
       const type = this.dataset.tab;
       const pilihan = type === 'rekomendasi' ? sorted[0] : (sorted[1] || sorted[0]);
-      tabBanner.innerHTML = `
-        <a href="series.html?id=${pilihan.id}" style="text-decoration:none;color:inherit;">
-          <img src="${pilihan.cover || ''}" onerror="this.style.display='none'">
-          <div class="hero-banner-content">
-            <h2>${pilihan.title}</h2>
-            <p>${pilihan.synopsis || ''}</p>
-            <div class="tags">
-              <span class="tag new">New</span>
-              <span class="tag popular">Popular</span>
+      if (tabBanner && pilihan) {
+        tabBanner.innerHTML = `
+          <a href="series.html?id=${pilihan.id}" style="text-decoration:none;color:inherit;">
+            <img src="${pilihan.cover || ''}" onerror="this.style.display='none'">
+            <div class="hero-banner-content">
+              <h2>${pilihan.title}</h2>
+              <p>${pilihan.synopsis || ''}</p>
+              <div class="tags">
+                <span class="tag new">New</span>
+                <span class="tag popular">Popular</span>
+              </div>
             </div>
-          </div>
-        </a>
-      `;
+          </a>
+        `;
+      }
     });
   });
 
-  // Trigger klik pertama
-  tabs[0].click();
+  if (tabs[0]) tabs[0].click();
 }
 
 // ===== NAV ACTIVE =====
@@ -368,6 +415,7 @@ document.querySelectorAll('.genre-btn').forEach(btn => {
     const params = new URLSearchParams(location.search);
     const tab = params.get('tab') || 'home';
     renderSeriesGrid(tab, genre, document.getElementById('seriesGrid'));
+    updateSeriesCount();
   });
 });
 
@@ -387,7 +435,9 @@ if (searchBtn) {
   });
 }
 
-if (closeSearch) closeSearch.addEventListener('click', () => searchModal.classList.remove('show'));
+if (closeSearch) {
+  closeSearch.addEventListener('click', () => searchModal.classList.remove('show'));
+}
 
 if (searchModal) {
   searchModal.addEventListener('click', (e) => {
@@ -398,11 +448,17 @@ if (searchModal) {
 if (searchInput) {
   searchInput.addEventListener('input', function() {
     const q = this.value.toLowerCase().trim();
-    if (!q) { searchResult.innerHTML = ''; return; }
+    if (!q) {
+      searchResult.innerHTML = '';
+      return;
+    }
     const filtered = SERIES.filter(s => s.title.toLowerCase().includes(q));
-    if (filtered.length === 0) { searchResult.innerHTML = `<div class="search-item" style="color:#666">Tidak ditemukan</div>`; return; }
+    if (filtered.length === 0) {
+      searchResult.innerHTML = `<div class="search-item" style="color:#666">Tidak ditemukan</div>`;
+      return;
+    }
     searchResult.innerHTML = filtered.map(s =>
-      `<a href="series.html?id=${s.id}" class="search-item">${s.title} ⭐${s.rating || '?'} · ${s.type || 'Manhwa'}</a>`
+      `<a href="series.html?id=\( {s.id}" class="search-item"> \){s.title} ⭐${s.rating || '?'} · ${s.type || 'Manhwa'}</a>`
     ).join('');
   });
 }
@@ -412,11 +468,11 @@ document.addEventListener('copy', (e) => e.preventDefault());
 document.addEventListener('cut', (e) => e.preventDefault());
 document.addEventListener('contextmenu', (e) => e.preventDefault());
 
-// ===== UPDATE WAKTU RELATIF SETIAP 30 DETIK =====
+// ===== UPDATE WAKTU RELATIF =====
 setInterval(() => {
   document.querySelectorAll('.chapter-time').forEach(el => {
     const timestamp = el.getAttribute('data-timestamp');
-    if (timestamp) {
+    if (timestamp && typeof Format !== 'undefined') {
       el.textContent = Format.timeAgo(timestamp);
     }
   });
