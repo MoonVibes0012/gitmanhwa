@@ -144,11 +144,13 @@
 
       let chapters = [];
       let currentIndex = -1;
+      let totalPages = 0;
       let isAutoScroll = false;
       let animationId = null;
       let lastTime = 0;
+      let accumulatedScroll = 0;
 
-      // Kecepatan default: 60 px/detik
+      // Kecepatan default: 60 px/detik (bisa diubah user)
       let autoScrollSpeed = 60;
 
       backBtn.addEventListener('click', function(e) {
@@ -197,116 +199,57 @@
           pagesEl.innerHTML = `<div class="empty">Error: ${err.message}</div>`;
         });
 
-      // ===== LOAD CHAPTER (PROGRESSIVE BLUR) =====
+      // ===== LOAD CHAPTER =====
       function loadChapter(index) {
         const ch = chapters[index];
         if (!ch) return;
 
         stopAutoScroll();
-        pagesEl.innerHTML = '<div class="empty">Memuat gambar...</div>';
+        pagesEl.innerHTML = '';
         const base = 'series/' + seriesId + '/' + ch.folder + '/';
         const formats = ['jpg', 'png', 'webp', 'jpeg', 'bmp'];
+        const maxPages = 200;
+
+        let loadedCount = 0;
 
         function pad(n) { return String(n).padStart(2, '0'); }
 
-        // 1. Buat elemen placeholder untuk setiap halaman (dari 1 sampai 200)
-        //    Tapi kita cuma render yang benar-benar ada
-        let maxPages = 0;
-        let isLoading = true;
-
-        // 2. Scan untuk menemukan jumlah halaman
-        function scanAndRender() {
-          let currentPage = 1;
-          let foundPages = [];
-
-          function tryPage(pageNum) {
-            if (pageNum > 200) {
-              // Selesai scan
-              finishRender(foundPages);
-              return;
+        function tryLoadPage(pageNum) {
+          if (pageNum > maxPages) {
+            if (loadedCount === 0) {
+              pagesEl.innerHTML = '<div class="empty">Tidak ada gambar di folder ini.</div>';
             }
-
-            let attempt = 0;
-            const img = new Image();
-            const tryFormat = () => {
-              if (attempt >= formats.length) {
-                // Halaman tidak ada, stop scan
-                finishRender(foundPages);
-                return;
-              }
-              
-              const src = base + pad(pageNum) + '.' + formats[attempt];
-              img.onload = function() {
-                foundPages.push(src);
-                tryPage(pageNum + 1);
-              };
-              img.onerror = function() {
-                attempt++;
-                tryFormat();
-              };
-              img.src = src;
-            };
-            tryFormat();
-          }
-
-          // Mulai scan dari halaman 1
-          tryPage(1);
-        }
-
-        function finishRender(pageList) {
-          if (pageList.length === 0) {
-            pagesEl.innerHTML = '<div class="empty">Tidak ada gambar di folder ini.</div>';
             return;
           }
 
-          // Update indicator total halaman
-          indicator.textContent = '1 / ' + pageList.length;
-          maxPages = pageList.length;
-
-          // 3. Render semua gambar SEKALIGUS dengan efek blur
-          pagesEl.innerHTML = '';
-          
-          pageList.forEach((src, idx) => {
-            const img = document.createElement('img');
-            img.src = src;
-            img.loading = 'eager';
-            img.decoding = 'async';
-            img.alt = 'Page ' + (idx + 1);
-            
-            // Set awal: blur + opacity rendah (buram)
-            img.style.filter = 'blur(10px)';
-            img.style.opacity = '0.5';
-            img.style.transition = 'filter 0.5s ease, opacity 0.5s ease';
-            img.style.width = '100%';
-            img.style.height = 'auto';
-            img.style.display = 'block';
-
-            // Saat gambar berhasil dimuat, hilangkan blur
+          let attempt = 0;
+          const img = new Image();
+          const tryFormat = () => {
+            if (attempt >= formats.length) return;
             img.onload = function() {
-              img.style.filter = 'blur(0)';
-              img.style.opacity = '1';
+              pagesEl.appendChild(img);
+              loadedCount++;
+              tryLoadPage(pageNum + 1);
             };
-
-            // Jika gambar gagal dimuat, tetap tampilkan dengan blur
             img.onerror = function() {
-              img.style.filter = 'blur(8px)';
-              img.style.opacity = '0.8';
+              attempt++;
+              tryFormat();
             };
-
-            pagesEl.appendChild(img);
-          });
-
-          // Simpan progress
-          try {
-            localStorage.setItem('gitmanhwa_progress_' + seriesId, JSON.stringify({
-              chapter: ch.folder,
-              scrollY: 0
-            }));
-          } catch(e) {}
+            img.src = base + pad(pageNum) + '.' + formats[attempt];
+          };
+          tryFormat();
         }
 
-        // Jalankan scan & render
-        scanAndRender();
+        tryLoadPage(1);
+        totalPages = loadedCount;
+
+        try {
+          localStorage.setItem('gitmanhwa_progress_' + seriesId, JSON.stringify({
+            chapter: ch.folder,
+            scrollY: 0
+          }));
+        } catch(e) {}
+
         updateNav();
       }
 
@@ -344,16 +287,20 @@
         playPauseBtn.classList.add('active');
         
         lastTime = performance.now();
+        accumulatedScroll = 0;
         
         function scrollStep(currentTime) {
           if (!isAutoScroll) return;
           
-          const deltaTime = (currentTime - lastTime) / 1000;
+          const deltaTime = (currentTime - lastTime) / 1000; // detik
           lastTime = currentTime;
           
+          // Kecepatan dalam px/detik × waktu berjalan (detik)
           const scrollAmount = autoScrollSpeed * deltaTime;
+          
           window.scrollBy(0, scrollAmount);
           
+          // Stop kalau sudah di bawah
           if (window.innerHeight + window.scrollY >= document.body.scrollHeight - 10) {
             stopAutoScroll();
             return;
