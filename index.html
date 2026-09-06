@@ -38,6 +38,7 @@
 
   <!-- ===== KONTEN HOME (default) ===== -->
   <div id="defaultContent" class="default-section">
+
     <!-- Slider -->
     <section class="featured-section">
       <div class="slider-container" id="sliderContainer"></div>
@@ -69,6 +70,16 @@
       </div>
     </section>
 
+    <!-- Continue Reading -->
+    <section class="section">
+      <div class="section-header">
+        <h3 class="section-title">Lanjut Baca</h3>
+      </div>
+      <div id="continueReading" class="update-list">
+        <!-- diisi oleh JS -->
+      </div>
+    </section>
+
     <!-- Grid Rekomendasi -->
     <section class="section">
       <div class="section-header">
@@ -76,7 +87,7 @@
         <span class="section-count" id="seriesCount">0 series</span>
       </div>
       <div class="series-grid" id="seriesGrid">
-        <!-- Diisi oleh JS (Skeleton Loading) -->
+        <!-- Diisi oleh JS -->
       </div>
     </section>
 
@@ -86,20 +97,20 @@
         <h3 class="section-title">Update Terbaru</h3>
       </div>
       <div class="update-list" id="updateList">
-        <!-- Diisi oleh JS (Skeleton Loading) -->
+        <!-- Diisi oleh JS -->
       </div>
     </section>
   </div>
 
-  <!-- ===== KONTEN EXPLORE (Baru) ===== -->
+  <!-- ===== KONTEN EXPLORE ===== -->
   <div id="exploreContent" style="display:none;">
-    <!-- Bagian 1: Hero Banner + Horizontal Scroll -->
+    <!-- Hero Banner + Horizontal Scroll -->
     <section class="explore-section">
       <div class="hero-banner" id="heroBanner"></div>
       <div class="horizontal-scroll" id="horizontalScroll"></div>
     </section>
 
-    <!-- Bagian 2: Grid Utama -->
+    <!-- Grid Utama -->
     <section class="section">
       <div class="section-header">
         <h3 class="section-title">Semua Series</h3>
@@ -107,7 +118,7 @@
       <div class="series-grid" id="exploreGrid"></div>
     </section>
 
-    <!-- Bagian 3: Lanjut Baca + Tabs -->
+    <!-- Lanjut Baca + Tabs -->
     <section class="section continue-section">
       <div class="section-header">
         <h3 class="section-title">Lanjut Baca</h3>
@@ -121,7 +132,6 @@
         <button class="explore-tab" data-tab="pilihan">Pilihan Admin</button>
       </div>
 
-      <!-- Banner berubah sesuai tab -->
       <div class="hero-banner" id="tabBanner"></div>
     </section>
   </div>
@@ -167,8 +177,9 @@
     }
   </script>
 
-  <!-- ===== PENTING: SCRIPT DI BAWAH, BIAR DOM UDAH SIAP ===== -->
+  <!-- Urutan script penting -->
   <script src="js/utils.js"></script>
+  <script src="js/features.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>
