@@ -14,6 +14,11 @@
     "badge": "3d",
     "chapters": [
       {
+        "num": 114,
+        "folder": "chapter-114",
+        "timestamp": "2026-09-05T20:15:00"
+      },
+      {
         "num": 9,
         "folder": "chapter-9",
         "timestamp": "2026-09-05T20:15:00"
