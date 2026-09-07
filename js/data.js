@@ -1,53 +1,69 @@
 /* ===================================================================
    GITMANHWA - DATA.JS
-   Helper untuk memuat data series dengan caching (biar cepat)
+   Helper untuk memuat data series dengan caching
    =================================================================== */
 
 const DataLoader = {
-  // Simpan data di cache memory (bukan localStorage)
   _cache: null,
 
   // Muat data series.json (dengan cache)
-  async load(forceRefresh = false) {
+  load: function(forceRefresh) {
+    var self = this;
+
     // Jika data sudah ada & tidak force refresh, pakai cache
     if (this._cache && !forceRefresh) {
       console.log('📦 Data dimuat dari cache');
-      return this._cache;
+      return Promise.resolve(this._cache);
     }
 
-    try {
-      const response = await fetch('data/series.json');
-      if (!response.ok) throw new Error('HTTP ' + response.status);
-      const data = await response.json();
-      this._cache = data;
-      console.log('✅ Data dimuat dari server:', data.length, 'series');
-      return data;
-    } catch (error) {
-      console.error('❌ Gagal memuat data:', error);
-      return [];
-    }
+    return fetch('data/series.json')
+      .then(function(response) {
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+        return response.json();
+      })
+      .then(function(data) {
+        self._cache = data;
+        console.log('✅ Data dimuat dari server:', data.length, 'series');
+        return data;
+      })
+      .catch(function(error) {
+        console.error('❌ Gagal memuat data:', error);
+        return [];
+      });
   },
 
   // Ambil satu series berdasarkan ID
-  async getSeriesById(id) {
-    const allData = await this.load();
-    return allData.find(s => s.id === id) || null;
+  getSeriesById: function(id) {
+    return this.load().then(function(allData) {
+      for (var i = 0; i < allData.length; i++) {
+        if (allData[i].id === id) return allData[i];
+      }
+      return null;
+    });
   },
 
   // Ambil semua chapter dari satu series
-  async getChapters(seriesId) {
-    const series = await this.getSeriesById(seriesId);
-    return series ? series.chapters : [];
+  getChapters: function(seriesId) {
+    return this.getSeriesById(seriesId).then(function(series) {
+      return series ? series.chapters : [];
+    });
   },
 
   // Ambil series terbaru (berdasarkan timestamp chapter terakhir)
-  async getLatestSeries(limit = 10) {
-    const allData = await this.load();
-    const sorted = [...allData].sort((a, b) => {
-      const aLatest = a.chapters[0]?.timestamp || '';
-      const bLatest = b.chapters[0]?.timestamp || '';
-      return new Date(bLatest) - new Date(aLatest);
+  getLatestSeries: function(limit) {
+    limit = limit || 10;
+    return this.load().then(function(allData) {
+      var sorted = allData.slice().sort(function(a, b) {
+        var aTime = a.chapters && a.chapters[0] ? a.chapters[0].timestamp || '' : '';
+        var bTime = b.chapters && b.chapters[0] ? b.chapters[0].timestamp || '' : '';
+        return new Date(bTime) - new Date(aTime);
+      });
+      return sorted.slice(0, limit);
     });
-    return sorted.slice(0, limit);
+  },
+
+  // Hapus cache (kalau perlu refresh paksa)
+  clearCache: function() {
+    this._cache = null;
   }
 };
