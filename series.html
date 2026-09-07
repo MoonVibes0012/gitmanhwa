@@ -15,10 +15,10 @@
         <div class="logo-icon">🦈</div>
         <span>GITMANHWA</span>
       </a>
-      <nav class="nav-menu" style="display:flex;gap:12px;">
-        <a href="index.html" style="color:var(--text);text-decoration:none;font-size:14px;">Beranda</a>
-        <a href="index.html?tab=all" style="color:var(--text);text-decoration:none;font-size:14px;">Daftar Series</a>
-      </nav>
+      <div style="display:flex;gap:12px;font-size:14px;">
+        <a href="index.html" style="color:var(--text);text-decoration:none;">Beranda</a>
+        <a href="index.html?tab=all" style="color:var(--text);text-decoration:none;">Daftar Series</a>
+      </div>
     </div>
   </header>
 
@@ -29,96 +29,100 @@
 
   <script src="js/features.js"></script>
   <script>
-    (function() {
+    (function () {
       // Blokir copy
-      document.addEventListener('copy', (e) => e.preventDefault());
-      document.addEventListener('cut', (e) => e.preventDefault());
-      document.addEventListener('contextmenu', (e) => e.preventDefault());
+      document.addEventListener('copy', function (e) { e.preventDefault(); });
+      document.addEventListener('cut', function (e) { e.preventDefault(); });
+      document.addEventListener('contextmenu', function (e) { e.preventDefault(); });
 
-      const params = new URLSearchParams(location.search);
-      const id = params.get('id');
-      const container = document.getElementById('seriesDetail');
+      var params = new URLSearchParams(location.search);
+      var id = params.get('id');
+      var container = document.getElementById('seriesDetail');
+
+      if (!id) {
+        container.innerHTML = '<div class="empty">Series tidak ditemukan</div>';
+        return;
+      }
 
       fetch('data/series.json')
-        .then(r => r.json())
-        .then(data => {
-          const series = data.find(s => s.id === id);
+        .then(function (r) {
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          return r.json();
+        })
+        .then(function (data) {
+          var series = null;
+          for (var i = 0; i < data.length; i++) {
+            if (data[i].id === id) {
+              series = data[i];
+              break;
+            }
+          }
+
           if (!series) {
-            container.innerHTML = `<div class="empty">Series tidak ditemukan</div>`;
+            container.innerHTML = '<div class="empty">Series tidak ditemukan</div>';
             return;
           }
 
           // Urutkan chapter dari besar ke kecil
-          const sorted = [...series.chapters].sort((a, b) => b.num - a.num);
+          var sorted = series.chapters.slice().sort(function (a, b) {
+            return b.num - a.num;
+          });
 
           // Cover
-          let coverHtml = '';
+          var coverHtml = '';
           if (series.cover) {
-            coverHtml = `<img src="\( {series.cover}" alt=" \){series.title}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`;
+            coverHtml = '<img src="' + series.cover + '" alt="' + series.title + '" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">';
           }
-          const fallback = `<div class="cover-fallback" style="display:\( {series.cover ? 'none' : 'flex'}"> \){series.title.charAt(0)}</div>`;
+          var fallback = '<div class="cover-fallback" style="display:' + (series.cover ? 'none' : 'flex') + '">' + series.title.charAt(0) + '</div>';
 
-          // Genre tags
-          const genreHtml = series.genre 
-            ? series.genre.map(g => `<span class="genre-tag">${g}</span>`).join('') 
-            : '';
+          // Genre
+          var genreHtml = '';
+          if (series.genre && series.genre.length) {
+            for (var g = 0; g < series.genre.length; g++) {
+              genreHtml += '<span class="genre-tag">' + series.genre[g] + '</span>';
+            }
+          }
 
-          // Status class
-          const statusClass = series.status === 'Ongoing' ? 'ongoing' : 'completed';
+          // Status
+          var statusClass = series.status === 'Ongoing' ? 'ongoing' : 'completed';
 
-          container.innerHTML = `
-            <div class="series-detail-container">
-              <div class="series-hero">
-                <div class="series-hero-cover">
-                  ${coverHtml}
-                  ${fallback}
-                </div>
-                <div class="series-hero-info">
-                  <h1>${series.title}</h1>
-                  <div class="meta">
-                    <span>${series.flag || '🏳️'}</span>
-                    <span>${series.type || 'Manhwa'}</span>
-                    <span class="status \( {statusClass}"> \){series.status || 'Ongoing'}</span>
-                  </div>
-                  ${series.author ? `<div class="author">✏️ ${series.author}</div>` : ''}
-                  ${series.rating ? `<div class="rating">⭐ ${series.rating}</div>` : ''}
-                  <div class="genre-list">${genreHtml}</div>
-                  \( {series.synopsis ? `<div class="synopsis"> \){series.synopsis}</div>` : ''}
+          // Chapter buttons
+          var chapterHtml = '';
+          for (var c = 0; c < sorted.length; c++) {
+            chapterHtml += '<a class="chapter-btn" href="reader.html?series=' + series.id + '&chapter=' + sorted[c].folder + '">Chapter ' + sorted[c].num + '</a>';
+          }
 
-                  <!-- Tombol Bookmark -->
-                  <button id="bookmarkBtn" style="
-                    margin-top: 14px;
-                    padding: 10px 18px;
-                    border-radius: 8px;
-                    border: 1px solid var(--border);
-                    background: var(--card);
-                    color: var(--text);
-                    font-size: 14px;
-                    font-weight: 600;
-                    cursor: pointer;
-                  ">
-                    🤍 Bookmark
-                  </button>
-                </div>
-              </div>
+          container.innerHTML = 
+            '<div class="series-detail-container">' +
+              '<div class="series-hero">' +
+                '<div class="series-hero-cover">' +
+                  coverHtml +
+                  fallback +
+                '</div>' +
+                '<div class="series-hero-info">' +
+                  '<h1>' + series.title + '</h1>' +
+                  '<div class="meta">' +
+                    '<span>' + (series.flag || '🏳️') + '</span>' +
+                    '<span>' + (series.type || 'Manhwa') + '</span>' +
+                    '<span class="status ' + statusClass + '">' + (series.status || 'Ongoing') + '</span>' +
+                  '</div>' +
+                  (series.author ? '<div class="author">✏️ ' + series.author + '</div>' : '') +
+                  (series.rating ? '<div class="rating">⭐ ' + series.rating + '</div>' : '') +
+                  '<div class="genre-list">' + genreHtml + '</div>' +
+                  (series.synopsis ? '<div class="synopsis">' + series.synopsis + '</div>' : '') +
+                  '<button id="bookmarkBtn" style="margin-top:14px;padding:10px 18px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:14px;font-weight:600;cursor:pointer;">🤍 Bookmark</button>' +
+                '</div>' +
+              '</div>' +
+              '<div class="section">' +
+                '<h3 class="section-title">Daftar Chapter (' + sorted.length + ')</h3>' +
+                '<div class="chapter-grid">' + chapterHtml + '</div>' +
+              '</div>' +
+            '</div>';
 
-              <div class="section">
-                <h3 class="section-title">Daftar Chapter (${sorted.length})</h3>
-                <div class="chapter-grid">
-                  ${sorted.map(c => `
-                    <a class="chapter-btn" href="reader.html?series=\( {series.id}&chapter= \){c.folder}">
-                      Chapter ${c.num}
-                    </a>
-                  `).join('')}
-                </div>
-              </div>
-            </div>
-          `;
-
-          // ===== Bookmark Logic =====
-          const bookmarkBtn = document.getElementById('bookmarkBtn');
+          // Bookmark
+          var bookmarkBtn = document.getElementById('bookmarkBtn');
           if (bookmarkBtn && typeof Bookmark !== 'undefined') {
-            function updateBookmarkButton() {
+            function updateBtn() {
               if (Bookmark.exists(series.id)) {
                 bookmarkBtn.innerHTML = '❤️ Bookmarked';
                 bookmarkBtn.style.background = 'var(--accent)';
@@ -132,27 +136,22 @@
               }
             }
 
-            updateBookmarkButton();
+            updateBtn();
 
-            bookmarkBtn.addEventListener('click', function() {
-              const isBookmarked = Bookmark.toggle(series.id);
-              updateBookmarkButton();
-              
-              // Toast sederhana
-              const toast = document.createElement('div');
+            bookmarkBtn.addEventListener('click', function () {
+              var isBookmarked = Bookmark.toggle(series.id);
+              updateBtn();
+
+              var toast = document.createElement('div');
               toast.textContent = isBookmarked ? 'Ditambahkan ke Bookmark' : 'Dihapus dari Bookmark';
-              toast.style.cssText = `
-                position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
-                background: var(--accent); color: white; padding: 12px 20px;
-                border-radius: 8px; font-size: 14px; z-index: 9999;
-              `;
+              toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--accent);color:white;padding:12px 20px;border-radius:8px;font-size:14px;z-index:9999;';
               document.body.appendChild(toast);
-              setTimeout(() => toast.remove(), 2000);
+              setTimeout(function () { toast.remove(); }, 2000);
             });
           }
         })
-        .catch(err => {
-          container.innerHTML = `<div class="empty">Gagal load data: ${err.message}</div>`;
+        .catch(function (err) {
+          container.innerHTML = '<div class="empty">Gagal load data: ' + err.message + '</div>';
         });
     })();
   </script>
