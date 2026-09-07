@@ -1,8 +1,9 @@
 name: Deploy to GitHub Pages
 
+# Trigger saat push ke branch utama
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "master" ]
   workflow_dispatch:
 
 permissions:
@@ -23,12 +24,23 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
-      - name: Upload artifact
+
+      - name: Upload artifact (semua file statis)
         uses: actions/upload-pages-artifact@v3
         with:
+          # Upload semua file di root repo, tanpa folder yang tidak perlu
           path: '.'
+          # Hindari upload file sensitif atau tidak dibutuhkan
+          exclude: |
+            .git/**
+            .github/**
+            node_modules/**
+            tools/**
+            *.log
+
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
